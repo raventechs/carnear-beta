@@ -230,7 +230,34 @@
       #dashCards .big { font-size:20px; }
       #dashCards h3 { font-size:11px; }
     }
-  </style>
+  
+/* ── PULIDO VISUAL RAVENTECHS ──────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
+body, input, button, select, textarea { font-family: 'Inter', sans-serif !important; }
+.logo-text, .app-title, h1 { font-family: 'Sora', sans-serif !important; }
+.producto-card, .product-card, [class*="prod-card"], [class*="item-card"] {
+  border-radius: 16px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,.13), 0 1px 4px rgba(0,0,0,.06) !important;
+  transition: transform .15s ease, box-shadow .15s ease !important;
+}
+.producto-card:active, .product-card:active { transform: scale(0.95) !important; }
+.btn-tomate, .btn-primary, [class*="btn-rojo"] {
+  border-radius: 14px !important;
+  box-shadow: 0 5px 18px rgba(192,57,43,.45), 0 2px 6px rgba(192,57,43,.2) !important;
+  transition: transform .12s ease !important; font-weight: 700 !important;
+}
+.btn-tomate:active, .btn-primary:active { transform: scale(0.97) !important; }
+.btn-secondary, .btn-naranja {
+  border-radius: 14px !important;
+  box-shadow: 0 4px 14px rgba(230,126,34,.35) !important;
+  transition: transform .12s ease !important; font-weight: 600 !important;
+}
+.btn-secondary:active, .btn-naranja:active { transform: scale(0.97) !important; }
+input, select, textarea { border-radius: 10px !important; }
+.toast, [class*="toast"], [id*="toast"] { border-radius: 12px !important; font-weight: 600 !important; }
+/* ──────────────────────────────────────────────────── */
+
+</style>
 </head>
 <body>
 <div id="offlineBanner" style="display:none;background:#7c3200;color:#ffd9b3;font-size:0.8rem;font-weight:600;text-align:center;padding:6px 12px;">📴 Sin conexión — ventas guardadas localmente, se sincronizan al reconectar</div>
