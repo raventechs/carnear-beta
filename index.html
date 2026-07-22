@@ -2306,7 +2306,7 @@ function chequearBackupDiario() {
   async function generarCodigoAcceso() {
     if (!uidDueno) return;
     const codigo = Math.floor(100000 + Math.random() * 900000).toString();
-    const pin    = pinCajeroActual || '2468';
+    const pin    = (typeof PIN_CAJERO !== 'undefined' ? PIN_CAJERO : '2468');
     try {
       await db.collection('accesos').doc(codigo).set({
         uidDueno, pin, app: 'carnear',
