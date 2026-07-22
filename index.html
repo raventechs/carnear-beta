@@ -777,6 +777,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setTimeout(() => {
     document.getElementById('loading').style.display = 'none';
+
+  // ── ARQUITECTURA CAJERO (estándar RavenTechs) ────────
+  const _codigoCajero = new URLSearchParams(window.location.search).get('cajero');
+
+  async function iniciarComoCajero(codigo) {
+    try {
+      const snap = await db.collection('accesos').doc(codigo).get();
+      if (!snap.exists) {
+        document.getElementById('loadingScreen').classList.add('hide');
+        document.getElementById('loginScreen').classList.add('active');
+        alert('Código de acceso inválido. Pedile un link nuevo al dueño.');
+        return;
+      }
+      const acceso = snap.data();
+      uidDueno = acceso.uidDueno;
+      pinCajeroActual = acceso.pin || '2468';
+      document.getElementById('loadingScreen').classList.add('hide');
+      document.getElementById('pinCajeroInput').value = '';
+      document.getElementById('pinCajeroError').textContent = '';
+      document.getElementById('modalPinCajero').classList.add('active');
+      setTimeout(() => document.getElementById('pinCajeroInput').focus(), 50);
+    } catch(e) {
+      console.error('Error buscando acceso:', e);
+      document.getElementById('loadingScreen').classList.add('hide');
+      document.getElementById('loginScreen').classList.add('active');
+    }
+  }
+
+  if (_codigoCajero) {
+    iniciarComoCajero(_codigoCajero);
+  } else {
     auth.onAuthStateChanged(user => {
       if(user && !user.isAnonymous) {
         currentUser = user;
@@ -790,6 +821,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showLogin();
       }
     });
+  } // fin flujo dueño
   }, 1800);
 
   // Login handlers
@@ -1944,7 +1976,7 @@ function toast(msg) {
     try {
       const uid = auth.currentUser ? auth.currentUser.uid : null;
       if (!uid) { alert('Iniciá sesión para exportar.'); return; }
-      db.collection('ventas').where('uid','==',uid)
+      db.collection('negocios').doc(uidDueno).collection('ventas').where('uid','==',uid)
         .orderBy('fecha','desc').limit(500).get().then(snap => {
           const rows = [['Fecha','Producto','Cantidad','Precio','Método','Total']];
           snap.forEach(d => {
@@ -2205,10 +2237,10 @@ async function generarBackup(silencioso) {
   if (!uid) return;
   try {
     var ventasSnap = await db.collection('negocios').doc(uid).collection('ventas').get().catch(function(){return {docs:[]};});
-    var productosSnap = await db.collection('productos').get().catch(function(){return {docs:[]};});
+    var productosSnap = await db.collection('negocios').doc(uidDueno).collection('productos').get().catch(function(){return {docs:[]};});
     var stockSnap = await db.collection('stock').get().catch(function(){return {docs:[]};});
     var cierresSnap = await db.collection('negocios').doc(uid).collection('cierres').get().catch(function(){return {docs:[]};});
-    var configSnap = await db.collection('configuracion').doc('general').get().catch(function(){return {exists:false};});
+    var configSnap = await db.collection('negocios').doc(uidDueno).collection('configuracion').doc('general').get().catch(function(){return {exists:false};});
     var fecha = new Date().toISOString().slice(0,10);
     var backup = {
       app:'CarneAR', version:'1.5', fecha:new Date().toISOString(), uid:uid,
@@ -2241,10 +2273,10 @@ async function restaurarBackup(input) {
     toast('Restaurando datos...');
     var batch = db.batch(); var count = 0;
     (backup.ventas||[]).forEach(function(v){var id=v._id;var d=Object.assign({},v);delete d._id;batch.set(db.collection('negocios').doc(uid).collection('ventas').doc(id),d);if(++count%400===0){batch.commit();batch=db.batch();}});
-    (backup.productos||[]).forEach(function(v){var id=v._id;var d=Object.assign({},v);delete d._id;batch.set(db.collection('productos').doc(id),d);});
+    (backup.productos||[]).forEach(function(v){var id=v._id;var d=Object.assign({},v);delete d._id;batch.set(db.collection('negocios').doc(uidDueno).collection('productos').doc(id),d);});
     (backup.stock||[]).forEach(function(v){var id=v._id;var d=Object.assign({},v);delete d._id;batch.set(db.collection('stock').doc(id),d);});
     (backup.cierres||[]).forEach(function(v){var id=v._id;var d=Object.assign({},v);delete d._id;batch.set(db.collection('negocios').doc(uid).collection('cierres').doc(id),d);});
-    if(backup.configuracion&&Object.keys(backup.configuracion).length>0){batch.set(db.collection('configuracion').doc('general'),backup.configuracion,{merge:true});}
+    if(backup.configuracion&&Object.keys(backup.configuracion).length>0){batch.set(db.collection('negocios').doc(uidDueno).collection('configuracion').doc('general'),backup.configuracion,{merge:true});}
     await batch.commit();
     toast('✅ Backup restaurado'); input.value='';
     setTimeout(function(){location.reload();},1500);
@@ -2257,6 +2289,31 @@ function chequearBackupDiario() {
   var el = document.getElementById('ultimoBackupFecha'); if (el && ultimo) el.textContent = ultimo;
   if (ultimo !== hoy) { setTimeout(function(){generarBackup(true);},5000); }
 }
+
+
+  // ── Generar código de acceso cajero ──────────────────
+  async function generarCodigoAcceso() {
+    if (!uidDueno) return;
+    const codigo = Math.floor(100000 + Math.random() * 900000).toString();
+    const pin    = pinCajeroActual || '2468';
+    try {
+      await db.collection('accesos').doc(codigo).set({
+        uidDueno, pin, app: 'carnear',
+        creadoEn: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      const base = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');
+      const link = base + '?cajero=' + codigo;
+      const el = document.getElementById('linkCajeroDisplay');
+      if (el) el.textContent = link;
+      const btn = document.getElementById('compartirLinkCajeroBtn');
+      if (btn) btn.onclick = () => {
+        const nombre = document.getElementById('cfgNombre')?.value || 'CARNEAR';
+        const msg = nombre + '\nLink para el cajero:\n' + link + '\nPIN: ' + pin;
+        window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+      };
+    } catch(e) { if(typeof logError !== 'undefined') logError('generarCodigoAcceso', e.message); }
+  }
+  function actualizarLinkCajero() { generarCodigoAcceso(); }
 
 </script>
 <!-- MODAL CIERRE -->
