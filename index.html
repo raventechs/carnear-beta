@@ -821,6 +821,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if(user && !user.isAnonymous) {
         currentUser = user;
         userRole = 'dueno';
+        uidDueno = user.uid;
         initApp();
       } else if(user && user.isAnonymous) {
         currentUser = user;
@@ -969,6 +970,7 @@ function initApp() {
   initOffline();
   cargarWhatsapp();
   chequearBackupDiario();
+  if (userRole === 'dueno') setTimeout(actualizarLinkCajero, 800);
 }
 
 function renderTabs(tabs) {
