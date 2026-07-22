@@ -794,23 +794,29 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const snap = await db.collection('accesos').doc(codigo).get();
       if (!snap.exists) {
-        document.getElementById('loadingScreen').classList.add('hide');
-        document.getElementById('loginScreen').classList.add('active');
-        alert('Código de acceso inválido. Pedile un link nuevo al dueño.');
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('login').style.display = 'flex';
+        alert('Código inválido. Pedile un link nuevo al dueño.');
         return;
       }
-      const acceso = snap.data();
-      uidDueno = acceso.uidDueno;
-      pinCajeroActual = acceso.pin || '2468';
-      document.getElementById('loadingScreen').classList.add('hide');
-      document.getElementById('pinCajeroInput').value = '';
-      document.getElementById('pinCajeroError').textContent = '';
-      document.getElementById('modalPinCajero').classList.add('active');
-      setTimeout(() => document.getElementById('pinCajeroInput').focus(), 50);
+      uidDueno = snap.data().uidDueno;
+      const pinEsperado = snap.data().pin || PIN_CAJERO;
+      document.getElementById('loading').style.display = 'none';
+      // Usar el sistema de PIN nativo de CarneAR
+      openPin('PIN Punto de Venta');
+      pinCallback = (pinIngresado) => {
+        if (pinIngresado === pinEsperado) {
+          currentUser = { uid: uidDueno, isAnonymous: true };
+          userRole = 'cajero';
+          initApp();
+          return true;
+        }
+        return false;
+      };
     } catch(e) {
       console.error('Error buscando acceso:', e);
-      document.getElementById('loadingScreen').classList.add('hide');
-      document.getElementById('loginScreen').classList.add('active');
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('login').style.display = 'flex';
     }
   }
 
