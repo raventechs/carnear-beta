@@ -22,20 +22,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>CarnéAR</title>
+  <title>CarneAR</title>
+<meta name="theme-color" content="#C0392B">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CarneAR">
+<link rel="manifest" href="manifest.json">
   <style>
     :root {
       --bg: #fafafa; --surface: #ffffff; --text: #1a1a1a; --text2: #555;
       --borde: #e0e0e0; --accent: #8B0000; --accent2: #B22222;
       --verde: #27ae60; --naranja: #e67e22; --rojo: #c0392b;
       --sombra: 0 2px 8px rgba(0,0,0,.08);
-      --radius: 10px;
+      --radius: 18px;
     }
     .dark {
       --bg: #121212; --surface: #1e1e1e; --text: #e0e0e0; --text2: #aaa;
       --borde: #333; --sombra: 0 2px 8px rgba(0,0,0,.3);
     }
     * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      background-image:
+        radial-gradient(circle at 15% 10%, rgba(139,0,0,.10) 0%, transparent 50%),
+        radial-gradient(circle at 88% 20%, rgba(0,0,0,.04) 0%, transparent 40%),
+        radial-gradient(circle at 80% 85%, rgba(139,0,0,.09) 0%, transparent 50%),
+        radial-gradient(circle at 10% 90%, rgba(139,0,0,.05) 0%, transparent 40%);
+      background-attachment: fixed;
+    }
+    body.dark {
+      background-image:
+        radial-gradient(circle at 15% 10%, rgba(178,34,34,.16) 0%, transparent 50%),
+        radial-gradient(circle at 88% 20%, rgba(178,34,34,.08) 0%, transparent 40%),
+        radial-gradient(circle at 80% 85%, rgba(178,34,34,.13) 0%, transparent 50%),
+        radial-gradient(circle at 10% 90%, rgba(178,34,34,.08) 0%, transparent 40%);
+      background-attachment: fixed;
+    }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:var(--bg); color:var(--text); min-height:100vh; transition: background .3s, color .3s; }
     button { cursor:pointer; border:2px solid var(--borde); background:var(--surface); color:var(--text); border-radius:var(--radius); padding:10px 16px; font-size:14px; transition:all .2s; }
     button:active { transform:scale(.96); }
@@ -100,7 +121,7 @@
     .cart h3 { font-size:15px; margin-bottom:8px; }
     .cart-item { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--borde); font-size:13px; }
     .cart-item:last-child { border:none; }
-    .cart-item button { padding:4px 8px; font-size:11px; border-radius:6px; }
+    .cart-item button { padding:4px 8px; font-size:11px; border-radius:10px; }
     .cart-total { font-size:18px; font-weight:700; text-align:right; margin-top:8px; color:var(--accent); }
     .cart-actions { display:flex; gap:8px; margin-top:10px; }
     .cart-actions button { flex:1; font-weight:600; }
@@ -112,7 +133,7 @@
     .menu-item-head { display:flex; justify-content:space-between; align-items:center; }
     .menu-item-head h3 { font-size:15px; }
     .menu-item-sizes { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
-    .menu-item-sizes span { background:var(--bg); padding:3px 8px; border-radius:6px; font-size:12px; }
+    .menu-item-sizes span { background:var(--bg); padding:3px 8px; border-radius:10px; font-size:12px; }
     .menu-item-actions { display:flex; gap:6px; margin-top:8px; }
     .menu-item-actions button { font-size:12px; padding:5px 10px; }
 
@@ -129,7 +150,7 @@
     .btn-delete { background:var(--rojo); color:#fff; border-color:var(--rojo); }
 
     /* ══ SIZE BLOCKS ══ */
-    .size-block { background:var(--bg); border:1px solid var(--borde); border-radius:8px; padding:10px; margin-bottom:8px; }
+    .size-block { background:var(--bg); border:1px solid var(--borde); border-radius:12px; padding:10px; margin-bottom:8px; }
     .size-block-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
     .size-block-head strong { font-size:13px; }
     .size-row { display:flex; gap:6px; margin-bottom:6px; }
@@ -211,7 +232,7 @@
     .pin-box button { width:100%; }
 
     /* ══ TOAST ══ */
-    .toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#333; color:#fff; padding:10px 20px; border-radius:8px; font-size:13px; z-index:700; opacity:0; transition:opacity .3s; pointer-events:none; }
+    .toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#333; color:#fff; padding:10px 20px; border-radius:12px; font-size:13px; z-index:700; opacity:0; transition:opacity .3s; pointer-events:none; }
     .toast.show { opacity:1; }
 
     /* ══ SIZE SELECT MODAL (for POS) ══ */
@@ -262,6 +283,42 @@
     .btn-cerrar-modal{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text2);line-height:1;}
 
   </style>
+<script>
+// RavenTechs PWA Banner v1.1 — en el HEAD para capturar beforeinstallprompt temprano
+var __rtPWA = (function() {
+  var deferred = null;
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferred = e;
+    if (!localStorage.getItem('pwa_installed') && !localStorage.getItem('pwa_rechazado')) {
+      setTimeout(function() {
+        var b = document.getElementById('bannerPWA');
+        if (b) b.style.display = 'flex';
+      }, 2000);
+    }
+  });
+  window.addEventListener('appinstalled', function() {
+    localStorage.setItem('pwa_installed', '1');
+    var b = document.getElementById('bannerPWA');
+    if (b) b.style.display = 'none';
+  });
+  return {
+    instalar: function() {
+      if (!deferred) return;
+      document.getElementById('bannerPWA').style.display = 'none';
+      deferred.prompt();
+      deferred.userChoice.then(function(c) {
+        if (c.outcome === 'accepted') localStorage.setItem('pwa_installed', '1');
+        deferred = null;
+      });
+    },
+    rechazar: function() {
+      document.getElementById('bannerPWA').style.display = 'none';
+      localStorage.setItem('pwa_rechazado', '1');
+    }
+  };
+})();
+</script>
 </head>
 <body>
 
@@ -286,7 +343,7 @@
           <path d="M70,17 Q85,25 89,41" stroke="#e05050" stroke-width="5" stroke-linecap="round" fill="none" opacity=".3"/>
         </svg>
   </div>
-  <div class="loader-text">CarnéAR</div>
+  <div class="loader-text">CarneAR</div>
   <div class="loader-sub">Preparando el mostrador…</div>
 </div>
 
@@ -312,7 +369,7 @@
           <path d="M70,17 Q85,25 89,41" stroke="#e05050" stroke-width="5" stroke-linecap="round" fill="none" opacity=".3"/>
         </svg>
     </div>
-    <h1>Carné<span>AR</span></h1>
+    <h1>Carne<span>AR</span></h1>
     <p>Caja registradora para carnicerías</p>
 
     <div id="loginFormFields">
@@ -338,7 +395,7 @@
 <div id="app">
   <header class="topbar">
     <div class="topbar-left">
-      <button id="logoBtn" aria-label="CarnéAR">
+      <button id="logoBtn" aria-label="CarneAR">
         <svg class="topbar-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
           <ellipse cx="50" cy="52" rx="38" ry="28" fill="#8B0000" stroke="#5a0000" stroke-width="3"/>
           <ellipse cx="42" cy="47" rx="10" ry="6" fill="#B22222" opacity=".7"/>
@@ -346,7 +403,7 @@
           <path d="M22 38 Q18 30 24 26 L30 30 Q26 33 24 38Z" fill="#F5F5DC" stroke="#ccc" stroke-width="1.5"/>
         </svg>
       </button>
-      <span class="topbar-title">Carné<span>AR</span></span>
+      <span class="topbar-title">Carne<span>AR</span></span>
     </div>
     <div class="topbar-right">
       <button id="themeBtn">🌙</button>
@@ -362,11 +419,11 @@
       <div style="font-size:12px;opacity:.8">Bienvenido/a,</div>
       <div id="dashNombre" style="font-size:20px;font-weight:700;margin:4px 0 12px"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div style="background:rgba(255,255,255,.15);border-radius:8px;padding:10px">
+        <div style="background:rgba(255,255,255,.15);border-radius:12px;padding:10px">
           <div style="font-size:10px;opacity:.8">Ventas hoy (total)</div>
           <div id="dashTotalHoy" style="font-size:18px;font-weight:700">$0</div>
         </div>
-        <div style="background:rgba(255,255,255,.15);border-radius:8px;padding:10px">
+        <div style="background:rgba(255,255,255,.15);border-radius:12px;padding:10px">
           <div style="font-size:10px;opacity:.8">Sucursales activas</div>
           <div id="dashActivas" style="font-size:18px;font-weight:700">0</div>
         </div>
@@ -442,6 +499,16 @@
       <div class="cart-actions">
         <button class="btn-limpiar" id="cartClearBtn">Vaciar</button>
         <button class="btn-cobrar" id="cartCobrarBtn">Cobrar</button>
+      </div>
+    </div>
+
+    <!-- CIERRE DE CAJA -->
+    <div class="config-group" style="margin:12px;">
+      <h3>🔒 Cierre de caja</h3>
+      <p style="font-size:0.78rem;color:var(--text2);margin-bottom:10px">Genera el resumen del turno. La caja sigue operativa.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-warning" style="flex:1;min-width:140px" onclick="verResumenCierre()">📤 Ver resumen</button>
+        <button style="flex:1;min-width:140px;background:#25D366;color:#fff;border:none;border-radius:12px;padding:10px;font-weight:700;cursor:pointer;" onclick="enviarResumenWA()">📲 Cerrar por WhatsApp</button>
       </div>
     </div>
   </div>
@@ -529,6 +596,16 @@
     <div id="featuresPanelArea" class="hidden"></div>
   </div>
 </div>
+
+
+  <!-- CUENTA INACTIVA -->
+  <div class="section" id="sec-inactivo" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;text-align:center;padding:32px 24px;">
+    <div style="font-size:56px;margin-bottom:16px">🔒</div>
+    <h2 style="color:var(--accent);margin-bottom:10px">Cuenta inactiva</h2>
+    <p style="color:var(--text2);font-size:0.9rem;line-height:1.6;max-width:300px;margin-bottom:24px">Tu cuenta está desactivada. Contactá a RavenTechs para activarla o renovar tu suscripción.</p>
+    <a href="https://wa.me/5491136547592?text=Hola%20RavenTechs%2C%20necesito%20reactivar%20mi%20cuenta%20de%20CarneAR" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:13px 24px;border-radius:10px;font-weight:700;font-size:0.95rem;text-decoration:none;margin-bottom:12px">📲 Contactar por WhatsApp</a>
+    <button onclick="auth.signOut()" style="background:none;border:1px solid var(--borde);border-radius:10px;padding:10px 20px;font-size:0.85rem;color:var(--text2);cursor:pointer;">Cerrar sesión</button>
+  </div>
 
 <!-- BOTTOM NAV -->
 <div class="mob-nav hidden" id="mobNav"></div>
@@ -681,72 +758,72 @@ const GRUPOS_MAP = {
 };
 
 const CATALOGO_EJEMPLO = [
-  // ── VACUNA ──
-  {nombre:'Asado de tira', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:5500},{nombre:'1/2 Kg',precio:2800}]},
-  {nombre:'Vacío', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:6500},{nombre:'1/2 Kg',precio:3300}]},
-  {nombre:'Bife de chorizo', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:7200},{nombre:'1/2 Kg',precio:3700}]},
-  {nombre:'Bife ancho', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:7000},{nombre:'1/2 Kg',precio:3600}]},
-  {nombre:'Nalga', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:5800},{nombre:'1/2 Kg',precio:3000}]},
-  {nombre:'Cuadril', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:6800},{nombre:'1/2 Kg',precio:3500}]},
-  {nombre:'Lomo', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:9500},{nombre:'1/2 Kg',precio:4900}]},
-  {nombre:'Paleta', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:4800},{nombre:'1/2 Kg',precio:2500}]},
-  {nombre:'Tapa de asado', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:5200},{nombre:'1/2 Kg',precio:2700}]},
-  {nombre:'Matambre', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:6200},{nombre:'1/2 Kg',precio:3200}]},
-  {nombre:'Roast beef', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:5000},{nombre:'1/2 Kg',precio:2600}]},
-  {nombre:'Colita de cuadril', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:7500},{nombre:'1/2 Kg',precio:3900}]},
-  {nombre:'Peceto', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:6000},{nombre:'1/2 Kg',precio:3100}]},
-  {nombre:'Carnaza', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:4200},{nombre:'1/2 Kg',precio:2200}]},
-  {nombre:'Carne picada común', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:4000},{nombre:'1/2 Kg',precio:2100}]},
-  {nombre:'Carne picada especial', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:5000},{nombre:'1/2 Kg',precio:2600}]},
-  {nombre:'Osobuco', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:3800},{nombre:'1/2 Kg',precio:2000}]},
-  {nombre:'Entraña', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:8500},{nombre:'1/2 Kg',precio:4400}]},
-  {nombre:'Falda', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:3500},{nombre:'1/2 Kg',precio:1800}]},
-  {nombre:'Aguja', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:4500},{nombre:'1/2 Kg',precio:2400}]},
+  // ── VACUNA ── (precios agosto 2026)
+  {nombre:'Asado de tira', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:19000},{nombre:'1/2 Kg',precio:9800}]},
+  {nombre:'Vacío', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:18500},{nombre:'1/2 Kg',precio:9500}]},
+  {nombre:'Bife de chorizo', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:22000},{nombre:'1/2 Kg',precio:11200}]},
+  {nombre:'Bife ancho', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:20000},{nombre:'1/2 Kg',precio:10200}]},
+  {nombre:'Nalga', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:18000},{nombre:'1/2 Kg',precio:9200}]},
+  {nombre:'Cuadril', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:20000},{nombre:'1/2 Kg',precio:10200}]},
+  {nombre:'Lomo', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:25000},{nombre:'1/2 Kg',precio:12800}]},
+  {nombre:'Paleta', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:15000},{nombre:'1/2 Kg',precio:7700}]},
+  {nombre:'Tapa de asado', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:17000},{nombre:'1/2 Kg',precio:8700}]},
+  {nombre:'Matambre', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:19000},{nombre:'1/2 Kg',precio:9700}]},
+  {nombre:'Roast beef', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:16000},{nombre:'1/2 Kg',precio:8200}]},
+  {nombre:'Colita de cuadril', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:22000},{nombre:'1/2 Kg',precio:11200}]},
+  {nombre:'Peceto', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:21000},{nombre:'1/2 Kg',precio:10700}]},
+  {nombre:'Carnaza', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:13000},{nombre:'1/2 Kg',precio:6700}]},
+  {nombre:'Carne picada común', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:12000},{nombre:'1/2 Kg',precio:6200}]},
+  {nombre:'Carne picada especial', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:16000},{nombre:'1/2 Kg',precio:8200}]},
+  {nombre:'Osobuco', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:12000},{nombre:'1/2 Kg',precio:6200}]},
+  {nombre:'Entraña', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:24000},{nombre:'1/2 Kg',precio:12200}]},
+  {nombre:'Falda', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:11000},{nombre:'1/2 Kg',precio:5700}]},
+  {nombre:'Aguja', categoria:'Vacuna', tamanos:[{nombre:'1 Kg',precio:14000},{nombre:'1/2 Kg',precio:7200}]},
 
   // ── CERDO ──
-  {nombre:'Bondiola', categoria:'Cerdo', tamanos:[{nombre:'1 Kg',precio:5800},{nombre:'1/2 Kg',precio:3000}]},
-  {nombre:'Costillitas de cerdo', categoria:'Cerdo', tamanos:[{nombre:'1 Kg',precio:5200},{nombre:'1/2 Kg',precio:2700}]},
-  {nombre:'Pechito de cerdo', categoria:'Cerdo', tamanos:[{nombre:'1 Kg',precio:4800},{nombre:'1/2 Kg',precio:2500}]},
-  {nombre:'Carré de cerdo', categoria:'Cerdo', tamanos:[{nombre:'1 Kg',precio:5500},{nombre:'1/2 Kg',precio:2900}]},
-  {nombre:'Matambre de cerdo', categoria:'Cerdo', tamanos:[{nombre:'1 Kg',precio:5000},{nombre:'1/2 Kg',precio:2600}]},
-  {nombre:'Solomillo de cerdo', categoria:'Cerdo', tamanos:[{nombre:'1 Kg',precio:6000},{nombre:'1/2 Kg',precio:3100}]},
-  {nombre:'Patitas de cerdo', categoria:'Cerdo', tamanos:[{nombre:'1 Kg',precio:2800},{nombre:'1/2 Kg',precio:1500}]},
+  {nombre:'Bondiola', categoria:'Cerdo', tamanos:[{nombre:'1 Kg',precio:18000},{nombre:'1/2 Kg',precio:9200}]},
+  {nombre:'Costillitas de cerdo', categoria:'Cerdo', tamanos:[{nombre:'1 Kg',precio:16000},{nombre:'1/2 Kg',precio:8200}]},
+  {nombre:'Pechito de cerdo', categoria:'Cerdo', tamanos:[{nombre:'1 Kg',precio:15000},{nombre:'1/2 Kg',precio:7700}]},
+  {nombre:'Carré de cerdo', categoria:'Cerdo', tamanos:[{nombre:'1 Kg',precio:17000},{nombre:'1/2 Kg',precio:8700}]},
+  {nombre:'Matambre de cerdo', categoria:'Cerdo', tamanos:[{nombre:'1 Kg',precio:16000},{nombre:'1/2 Kg',precio:8200}]},
+  {nombre:'Solomillo de cerdo', categoria:'Cerdo', tamanos:[{nombre:'1 Kg',precio:18000},{nombre:'1/2 Kg',precio:9200}]},
+  {nombre:'Patitas de cerdo', categoria:'Cerdo', tamanos:[{nombre:'1 Kg',precio:9000},{nombre:'1/2 Kg',precio:4700}]},
 
   // ── POLLO ──
-  {nombre:'Pollo entero', categoria:'Pollo', tamanos:[{nombre:'Unidad',precio:4500}]},
-  {nombre:'Pata muslo', categoria:'Pollo', tamanos:[{nombre:'1 Kg',precio:3200},{nombre:'1/2 Kg',precio:1700}]},
-  {nombre:'Suprema', categoria:'Pollo', tamanos:[{nombre:'1 Kg',precio:5500},{nombre:'1/2 Kg',precio:2900}]},
-  {nombre:'Alitas', categoria:'Pollo', tamanos:[{nombre:'1 Kg',precio:2800},{nombre:'1/2 Kg',precio:1500}]},
-  {nombre:'Pechuga con hueso', categoria:'Pollo', tamanos:[{nombre:'1 Kg',precio:4200},{nombre:'1/2 Kg',precio:2200}]},
+  {nombre:'Pollo entero', categoria:'Pollo', tamanos:[{nombre:'Unidad',precio:14000}]},
+  {nombre:'Pata muslo', categoria:'Pollo', tamanos:[{nombre:'1 Kg',precio:10000},{nombre:'1/2 Kg',precio:5200}]},
+  {nombre:'Suprema', categoria:'Pollo', tamanos:[{nombre:'1 Kg',precio:17000},{nombre:'1/2 Kg',precio:8700}]},
+  {nombre:'Alitas', categoria:'Pollo', tamanos:[{nombre:'1 Kg',precio:9000},{nombre:'1/2 Kg',precio:4700}]},
+  {nombre:'Pechuga con hueso', categoria:'Pollo', tamanos:[{nombre:'1 Kg',precio:13000},{nombre:'1/2 Kg',precio:6700}]},
 
   // ── ACHURAS ──
-  {nombre:'Chinchulines', categoria:'Achuras', tamanos:[{nombre:'1 Kg',precio:4500},{nombre:'1/2 Kg',precio:2400}]},
-  {nombre:'Mollejas', categoria:'Achuras', tamanos:[{nombre:'1 Kg',precio:8000},{nombre:'1/2 Kg',precio:4200}]},
-  {nombre:'Riñones', categoria:'Achuras', tamanos:[{nombre:'1 Kg',precio:3000},{nombre:'1/2 Kg',precio:1600}]},
-  {nombre:'Tripa gorda', categoria:'Achuras', tamanos:[{nombre:'1 Kg',precio:3500},{nombre:'1/2 Kg',precio:1900}]},
-  {nombre:'Corazón', categoria:'Achuras', tamanos:[{nombre:'1 Kg',precio:3200},{nombre:'1/2 Kg',precio:1700}]},
+  {nombre:'Chinchulines', categoria:'Achuras', tamanos:[{nombre:'1 Kg',precio:14000},{nombre:'1/2 Kg',precio:7200}]},
+  {nombre:'Mollejas', categoria:'Achuras', tamanos:[{nombre:'1 Kg',precio:22000},{nombre:'1/2 Kg',precio:11200}]},
+  {nombre:'Riñones', categoria:'Achuras', tamanos:[{nombre:'1 Kg',precio:9000},{nombre:'1/2 Kg',precio:4700}]},
+  {nombre:'Tripa gorda', categoria:'Achuras', tamanos:[{nombre:'1 Kg',precio:11000},{nombre:'1/2 Kg',precio:5700}]},
+  {nombre:'Corazón', categoria:'Achuras', tamanos:[{nombre:'1 Kg',precio:10000},{nombre:'1/2 Kg',precio:5200}]},
 
   // ── EMBUTIDOS ──
-  {nombre:'Chorizo parrillero', categoria:'Embutidos', tamanos:[{nombre:'1 Kg',precio:4500},{nombre:'1/2 Kg',precio:2400}]},
-  {nombre:'Morcilla', categoria:'Embutidos', tamanos:[{nombre:'Unidad',precio:800}]},
-  {nombre:'Salchicha parrillera', categoria:'Embutidos', tamanos:[{nombre:'1 Kg',precio:3800},{nombre:'1/2 Kg',precio:2000}]},
-  {nombre:'Longaniza', categoria:'Embutidos', tamanos:[{nombre:'1 Kg',precio:5000},{nombre:'1/2 Kg',precio:2600}]},
-  {nombre:'Chorizo colorado', categoria:'Embutidos', tamanos:[{nombre:'1 Kg',precio:5500},{nombre:'1/2 Kg',precio:2900}]},
+  {nombre:'Chorizo parrillero', categoria:'Embutidos', tamanos:[{nombre:'Unidad',precio:2200},{nombre:'1 Kg (6u)',precio:12000}]},
+  {nombre:'Morcilla', categoria:'Embutidos', tamanos:[{nombre:'Unidad',precio:7500}]},
+  {nombre:'Salchicha parrillera', categoria:'Embutidos', tamanos:[{nombre:'Unidad',precio:1800},{nombre:'1 Kg',precio:9500}]},
+  {nombre:'Longaniza', categoria:'Embutidos', tamanos:[{nombre:'1 Kg',precio:14000},{nombre:'1/2 Kg',precio:7200}]},
+  {nombre:'Chorizo colorado', categoria:'Embutidos', tamanos:[{nombre:'1 Kg',precio:15000},{nombre:'1/2 Kg',precio:7700}]},
 
   // ── BEBIDAS ──
-  {nombre:'Coca-Cola', categoria:'Gaseosas', tamanos:[{nombre:'500ml',precio:1200},{nombre:'1.5L',precio:2200},{nombre:'2.25L',precio:2800}]},
-  {nombre:'Sprite', categoria:'Gaseosas', tamanos:[{nombre:'500ml',precio:1200},{nombre:'1.5L',precio:2200}]},
-  {nombre:'Fanta', categoria:'Gaseosas', tamanos:[{nombre:'500ml',precio:1200},{nombre:'1.5L',precio:2200}]},
-  {nombre:'Agua mineral', categoria:'Aguas', tamanos:[{nombre:'500ml',precio:800},{nombre:'1.5L',precio:1400}]},
-  {nombre:'Cerveza Quilmes', categoria:'Cervezas', tamanos:[{nombre:'1L',precio:2000},{nombre:'473ml',precio:1200}]},
-  {nombre:'Cerveza Brahma', categoria:'Cervezas', tamanos:[{nombre:'1L',precio:1800},{nombre:'473ml',precio:1100}]},
+  {nombre:'Coca-Cola', categoria:'Gaseosas', tamanos:[{nombre:'500ml',precio:2800},{nombre:'1.5L',precio:4500},{nombre:'2.25L',precio:6000}]},
+  {nombre:'Sprite', categoria:'Gaseosas', tamanos:[{nombre:'500ml',precio:2800},{nombre:'1.5L',precio:4500}]},
+  {nombre:'Fanta', categoria:'Gaseosas', tamanos:[{nombre:'500ml',precio:2800},{nombre:'1.5L',precio:4500}]},
+  {nombre:'Agua mineral', categoria:'Aguas', tamanos:[{nombre:'500ml',precio:1800},{nombre:'1.5L',precio:3200}]},
+  {nombre:'Cerveza Quilmes', categoria:'Cervezas', tamanos:[{nombre:'1L',precio:4800},{nombre:'473ml',precio:2800}]},
+  {nombre:'Cerveza Brahma', categoria:'Cervezas', tamanos:[{nombre:'1L',precio:4200},{nombre:'473ml',precio:2600}]},
 
   // ── EXTRAS ──
-  {nombre:'Carbón (bolsa)', categoria:'Extras', tamanos:[{nombre:'4 Kg',precio:3500},{nombre:'2 Kg',precio:2000}]},
-  {nombre:'Leña', categoria:'Extras', tamanos:[{nombre:'Bolsa',precio:2500}]},
-  {nombre:'Chimichurri', categoria:'Extras', tamanos:[{nombre:'Frasco',precio:1500}]},
-  {nombre:'Sal parrillera', categoria:'Extras', tamanos:[{nombre:'Bolsa',precio:900}]},
-  {nombre:'Papel aluminio', categoria:'Extras', tamanos:[{nombre:'Rollo',precio:1800}]},
+  {nombre:'Carbón (bolsa)', categoria:'Extras', tamanos:[{nombre:'4 Kg',precio:8500},{nombre:'2 Kg',precio:4500}]},
+  {nombre:'Leña', categoria:'Extras', tamanos:[{nombre:'Bolsa',precio:6000}]},
+  {nombre:'Chimichurri', categoria:'Extras', tamanos:[{nombre:'Frasco',precio:3800}]},
+  {nombre:'Sal parrillera', categoria:'Extras', tamanos:[{nombre:'Bolsa',precio:2500}]},
+  {nombre:'Papel aluminio', categoria:'Extras', tamanos:[{nombre:'Rollo',precio:4500}]},
 ];
 
 const INSUMOS_BASICOS = [
@@ -853,12 +930,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if (user && !user.isAnonymous) {
         if (appRunning && currentUser && currentUser.uid === user.uid) return;
         appRunning = true;
-        currentUser = user;
-        userRole = 'dueno';
-        currentSucursal = { id: 'principal', nombre: 'Principal' };
-        initApp();
-        const delay = limiteSucursales > 1 ? 0 : 600;
-        setTimeout(() => verificarMultiSucursal(), delay);
+        // Verificar cliente y cargar sus features
+        cargarCliente(user).then(() => {
+          // Atajo: ?admin=1 en la URL abre el panel directo si es el admin
+          const params = new URLSearchParams(window.location.search);
+          if (params.get('admin') === '1' && esAdmin(user.email)) {
+            showFeaturesPanel();
+          }
+        });
+        return; // cargarCliente llama initApp() internamente
       } else if (user && user.isAnonymous && _codigoLink) {
         iniciarCajeroLink(_codigoLink);
       } else if (user && user.isAnonymous && !_codigoLink) {
@@ -2201,6 +2281,224 @@ function entrarEnSucursal(suc) {
   switchTab('caja');
 }
 
+
+
+// ══ SISTEMA DE CLIENTES ══════════════════════════════════════
+// ADMIN_EMAIL ya definido arriba
+let clienteActual = null;
+
+const PLANES = {
+  basico:  { nombre:'Básico',     features:{gastos:false,ticket:false,proveedores:false}, limiteSucursales:1 },
+  pro:     { nombre:'Pro',        features:{gastos:true, ticket:true, proveedores:false}, limiteSucursales:3 },
+  full:    { nombre:'Full',       features:{gastos:true, ticket:true, proveedores:true},  limiteSucursales:99 }
+};
+
+function esAdmin(email) {
+  return email === ADMIN_EMAIL;
+}
+
+function mostrarInactivo() {
+  document.getElementById('loading').style.display = 'none';
+  document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+  const sec = document.getElementById('sec-inactivo');
+  if (sec) sec.style.display = 'flex';
+}
+
+async function cargarCliente(user) {
+  const email = user.email;
+
+  // Admin siempre pasa sin restricciones
+  if (esAdmin(email)) {
+    currentUser = user;
+    userRole = 'dueno';
+    currentSucursal = { id: 'principal', nombre: 'Principal' };
+    initApp();
+    const delay = limiteSucursales > 1 ? 0 : 600;
+    setTimeout(() => verificarMultiSucursal(), delay);
+    return;
+  }
+
+  try {
+    // Buscar o crear cliente
+    const clienteRef = db.collection('clientes').doc(email);
+    let clienteSnap = await clienteRef.get();
+
+    if (!clienteSnap.exists) {
+      // Primera vez: crear plan básico automáticamente
+      const basicoData = {
+        email,
+        nombre: user.displayName || email.split('@')[0],
+        plan: 'basico',
+        activo: true,
+        features: PLANES.basico.features,
+        limiteSucursales: 1,
+        creadoEn: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      await clienteRef.set(basicoData);
+      clienteSnap = { data: () => basicoData, exists: true };
+      console.log('Cliente nuevo creado con plan básico:', email);
+    }
+
+    const datos = clienteSnap.data();
+    clienteActual = datos;
+
+    // Guardar/actualizar el uid en el registro de cliente (para el panel de actividad)
+    if (datos.uid !== user.uid) {
+      clienteRef.set({ uid: user.uid }, { merge: true }).catch(() => {});
+    }
+
+    // Verificar cuenta activa
+    if (!datos.activo) {
+      mostrarInactivo();
+      return;
+    }
+
+    // Aplicar features del cliente (no del negocio)
+    features = Object.assign(features, datos.features || {});
+    limiteSucursales = datos.limiteSucursales || 1;
+    localStorage.setItem('carnear_ls', limiteSucursales);
+
+    currentUser = user;
+    userRole = 'dueno';
+    currentSucursal = { id: 'principal', nombre: 'Principal' };
+    initApp();
+    if (limiteSucursales > 1) setTimeout(() => verificarMultiSucursal(), 0);
+
+  } catch(e) {
+    logError('cargarCliente', e.message);
+    // Si falla la verificación, dar acceso básico como fallback
+    features = PLANES.basico.features;
+    limiteSucursales = 1;
+    currentUser = user;
+    userRole = 'dueno';
+    currentSucursal = { id: 'principal', nombre: 'Principal' };
+    initApp();
+  }
+}
+
+// ══ GESTIÓN DE CLIENTES (solo admin - panel PIN 2580) ═════════
+async function cargarMisClientes() {
+  const lista = document.getElementById('misClientesList');
+  if (!lista) return;
+  try {
+    const snap = await db.collection('clientes').orderBy('creadoEn','desc').get();
+    if (snap.empty) {
+      lista.innerHTML = '<p style="font-size:13px;color:var(--text2);text-align:center;padding:12px">Sin clientes registrados aún.</p>';
+      return;
+    }
+    lista.innerHTML = snap.docs.map(d => {
+      const cl = d.data();
+      const planNom = PLANES[cl.plan]?.nombre || cl.plan;
+      const estadoBadge = cl.activo
+        ? '<span style="background:rgba(39,174,96,.12);color:#27ae60;font-size:10px;padding:2px 8px;border-radius:10px">● Activo</span>'
+        : '<span style="background:rgba(239,68,68,.12);color:#ef4444;font-size:10px;padding:2px 8px;border-radius:10px">● Inactivo</span>';
+      return `<div class="config-group" style="margin-bottom:8px;padding:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <div>
+            <div style="font-size:14px;font-weight:700;">${cl.nombre||cl.email}</div>
+            <div style="font-size:11px;color:var(--text2);">${cl.email}</div>
+          </div>
+          ${estadoBadge}
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+          <select onchange="cambiarPlan('${d.id}',this.value)" style="flex:1;font-size:12px;padding:6px;">
+            <option value="basico" ${cl.plan==='basico'?'selected':''}>Básico — 1 suc</option>
+            <option value="pro"    ${cl.plan==='pro'?'selected':''}>Pro — 3 suc</option>
+            <option value="full"   ${cl.plan==='full'?'selected':''}>Full — ilimitado</option>
+          </select>
+          <button onclick="toggleCliente('${d.id}', ${!cl.activo})" style="font-size:11px;padding:6px 10px;border-radius:10px;${cl.activo?'background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.3);':'background:rgba(39,174,96,.1);color:#27ae60;border:1px solid rgba(39,174,96,.3);'} cursor:pointer;">${cl.activo?'🚫 Desactivar':'✅ Activar'}</button>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;padding:6px 2px;">
+          ${[['gastos','💸 Gastos'],['ticket','📸 Ticket IA'],['proveedores','🏭 Proveedores']].map(([k,lbl])=>`
+            <label style="font-size:11px;display:flex;align-items:center;gap:4px;cursor:pointer;background:rgba(0,0,0,.04);padding:4px 8px;border-radius:10px;">
+              <input type="checkbox" ${cl.features&&cl.features[k]?'checked':''} onchange="toggleFeatureCliente('${d.id}',this,'${k}',this.checked)" style="cursor:pointer;width:auto;">
+              ${lbl}
+            </label>
+          `).join('')}
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) { logError('cargarMisClientes', e.message); }
+}
+
+async function cambiarPlan(email, nuevoPlan) {
+  const plan = PLANES[nuevoPlan];
+  if (!plan) return;
+  try {
+    await db.collection('clientes').doc(email).update({
+      plan: nuevoPlan,
+      features: plan.features,
+      limiteSucursales: plan.limiteSucursales
+    });
+    toast('Plan actualizado: ' + plan.nombre);
+    cargarMisClientes();
+  } catch(e) { toast('Error: ' + e.message); }
+}
+
+async function toggleCliente(email, nuevoEstado) {
+  try {
+    await db.collection('clientes').doc(email).update({ activo: nuevoEstado });
+    toast(nuevoEstado ? 'Cliente activado' : 'Cliente desactivado');
+    cargarMisClientes();
+  } catch(e) { toast('Error: ' + e.message); }
+}
+
+async function toggleFeatureCliente(email, checkbox, key, value) {
+  try {
+    await db.collection('clientes').doc(email).update({
+      [`features.${key}`]: value
+    });
+    toast(`${key}: ${value ? '✅ activado' : '❌ desactivado'}`);
+  } catch(e) {
+    checkbox.checked = !value;
+    toast('Error: ' + e.message);
+  }
+}
+
+
+// ══ CIERRE DE CAJA (resumen + WhatsApp) ═══════════════════════
+async function obtenerVentasHoy() {
+  const hoy = new Date().toISOString().slice(0,10);
+  try {
+    const snap = await col('ventas').orderBy('ts','desc').limit(300).get();
+    const lista = [];
+    snap.forEach(doc => {
+      const v = doc.data();
+      const dia = v.fechaDia || (v.fecha && v.fecha.toDate ? v.fecha.toDate().toISOString().slice(0,10) : (v.fechaLocal ? v.fechaLocal.slice(0,10) : null));
+      if (dia === hoy) lista.push(v);
+    });
+    return lista;
+  } catch(e) { logError('obtenerVentasHoy', e.message); return []; }
+}
+
+function generarResumenCierre(ventas) {
+  const hoy = new Date().toLocaleDateString('es-AR');
+  const total = ventas.reduce((s,v) => s + (v.total||0), 0);
+  const desglose = {};
+  ventas.forEach(v => {
+    const m = v.metodo || 'efectivo';
+    desglose[m] = (desglose[m]||0) + (v.total||0);
+  });
+  const nombreLabels = { efectivo:'💵 Efectivo', transferencia:'📲 Transferencia', tarjeta:'💳 Tarjeta', mercadopago:'🔵 MercadoPago' };
+  const desgloseTxt = Object.entries(desglose)
+    .map(([k,v]) => `  • ${nombreLabels[k]||k}: $${v.toLocaleString('es-AR')}`)
+    .join('\n');
+  const sucNombre = currentSucursal?.nombre || 'Principal';
+  return `🥩 *CarneAR — Cierre de Caja*\n📅 ${hoy} | 🏪 ${sucNombre}\n\n🔢 Ventas: ${ventas.length}\n💰 Total: $${total.toLocaleString('es-AR')}\n\n📊 Desglose:\n${desgloseTxt}`;
+}
+
+async function verResumenCierre() {
+  const ventas = await obtenerVentasHoy();
+  if (!ventas.length) { toast('No hay ventas hoy'); return; }
+  alert(generarResumenCierre(ventas).replace(/\*/g,''));
+}
+
+async function enviarResumenWA() {
+  const ventas = await obtenerVentasHoy();
+  if (!ventas.length) { toast('No hay ventas hoy'); return; }
+  window.open('https://wa.me/?text=' + encodeURIComponent(generarResumenCierre(ventas)), '_blank');
+}
+
 // ══ CAJA MODES ═══════════════════════════════════════════════
 function setCajaMode(mode) {
   document.querySelectorAll('.caja-mode-content').forEach(d => d.classList.remove('active'));
@@ -2261,6 +2559,11 @@ function showFeaturesPanel() {
       ${makeToggle('gastos','💸','Gastos')}
       ${makeToggle('proveedores','🏭','Proveedores')}
       ${makeToggle('ticket','📸','Escáner de tickets')}
+      ${currentUser?.email === ADMIN_EMAIL ? `
+      <div style="margin-top:14px;border-top:1px solid var(--borde);padding-top:14px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">👥 Mis clientes</div>
+        <div id="misClientesList"><p style="font-size:13px;color:var(--text2);text-align:center">Cargando...</p></div>
+      </div>` : ''}
       <div class="feature-toggle">
         <span>🏪 Multi-sucursal <span style="background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;margin-left:4px">PLUS</span></span>
         <div style="display:flex;align-items:center;gap:8px;">
@@ -2276,6 +2579,8 @@ function showFeaturesPanel() {
   modal.onclick = e => { if(e.target===modal) cerrarModalRaven(); };
   const limEl = document.getElementById('inputLimSuc');
   if (limEl) limEl.value = limiteSucursales;
+  // Cargar clientes si es admin
+  if (currentUser?.email === ADMIN_EMAIL) setTimeout(cargarMisClientes, 100);
 }
 
 function cerrarModalRaven() { document.getElementById('modalRaven').style.display = 'none'; }
@@ -2340,8 +2645,8 @@ async function renderSucursalesConfig() {
           </div>
         </div>
         <div style="display:flex;gap:8px;margin-top:10px;">
-          <button onclick="enviarLinkWA('${s.nombre}','${link}')" style="flex:1;background:#25D366;color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;">📲 Invitar cajero</button>
-          <button onclick="copiarLink('${link}')" style="background:var(--surface);border:1px solid var(--borde);border-radius:8px;padding:9px;font-size:13px;cursor:pointer;">📋</button>
+          <button onclick="enviarLinkWA('${s.nombre}','${link}')" style="flex:1;background:#25D366;color:#fff;border:none;border-radius:12px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;">📲 Invitar cajero</button>
+          <button onclick="copiarLink('${link}')" style="background:var(--surface);border:1px solid var(--borde);border-radius:12px;padding:9px;font-size:13px;cursor:pointer;">📋</button>
         </div>
       </div>`;
     }).join('');
@@ -2404,9 +2709,9 @@ function editarNombreSuc(id, nombreActual) {
   const info = div.querySelector('div:first-child');
   if (!info) return;
   info.innerHTML = `<div style="display:flex;gap:6px;align-items:center;">
-    <input type="text" id="edit-suc-${id}" value="${nombreActual}" style="font-size:14px;font-weight:600;padding:4px 8px;border-radius:6px;border:2px solid var(--accent);width:140px;">
-    <button onclick="guardarNombreSuc('${id}')" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;">✓</button>
-    <button onclick="renderSucursalesConfig()" style="background:var(--surface);border:1px solid var(--borde);border-radius:6px;padding:5px 8px;font-size:12px;cursor:pointer;">✕</button>
+    <input type="text" id="edit-suc-${id}" value="${nombreActual}" style="font-size:14px;font-weight:600;padding:4px 8px;border-radius:10px;border:2px solid var(--accent);width:140px;">
+    <button onclick="guardarNombreSuc('${id}')" style="background:var(--accent);color:#fff;border:none;border-radius:10px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;">✓</button>
+    <button onclick="renderSucursalesConfig()" style="background:var(--surface);border:1px solid var(--borde);border-radius:10px;padding:5px 8px;font-size:12px;cursor:pointer;">✕</button>
   </div>`;
   document.getElementById('edit-suc-' + id)?.focus();
 }
@@ -2437,7 +2742,7 @@ function copiarLink(url) {
 
   // SERVICE WORKER — P3 ROBUSTEZ
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/carneAr/sw-carnear.js')
+    navigator.serviceWorker.register('/sw-carnear.js')
       .catch(e => logError('sw', e));
   }
 </script>
