@@ -694,6 +694,27 @@ var __rtPWA = (function() {
   <div class="size-select-box" id="sizeSelectBox"></div>
 </div>
 
+<!-- PESO LIBRE -->
+<div class="size-select-overlay" id="pesoLibreOverlay">
+  <div class="size-select-box" id="pesoLibreBox" style="text-align:center;">
+    <h3 id="pesoLibreNombre" style="margin-bottom:4px"></h3>
+    <p style="font-size:0.78rem;color:var(--text2);margin-bottom:16px" id="pesoLibrePrecioKg"></p>
+    <div style="display:flex;align-items:baseline;justify-content:center;gap:8px;margin-bottom:6px">
+      <input type="number" id="pesoLibreInput" inputmode="decimal" step="0.001" min="0" placeholder="0.000"
+        style="background:transparent;border:none;outline:none;color:var(--text);font-size:40px;font-weight:800;width:150px;text-align:right;font-family:monospace">
+      <span style="font-size:16px;color:var(--text2);font-weight:600">kg</span>
+    </div>
+    <div style="background:var(--bg2,#0d1413);border:1px solid var(--borde);border-radius:14px;padding:14px;margin:16px 0">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:4px">TOTAL</div>
+      <div style="font-size:24px;font-weight:800;color:var(--verde,#27ae60)" id="pesoLibreTotal">$0</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-cancel" onclick="document.getElementById('pesoLibreOverlay').classList.remove('show')">Cancelar</button>
+      <button class="btn-save" id="pesoLibreConfirmBtn">✅ Agregar</button>
+    </div>
+  </div>
+</div>
+
 <!-- PIN -->
 <div class="pin-overlay" id="pinOverlay">
   <div class="pin-box">
@@ -1028,6 +1049,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('sizeSelectOverlay').addEventListener('click', e => {
     if(e.target.id==='sizeSelectOverlay') e.target.classList.remove('show');
   });
+  document.getElementById('pesoLibreOverlay').addEventListener('click', e => {
+    if(e.target.id==='pesoLibreOverlay') e.target.classList.remove('show');
+  });
   document.getElementById('pinOverlay').addEventListener('click', e => {
     if(e.target.id==='pinOverlay') { e.target.classList.remove('show'); document.getElementById('pinInput').value=''; }
   });
@@ -1293,28 +1317,67 @@ function renderPOS() {
 
 function selectProduct(p) {
   if(!p.tamanos || p.tamanos.length === 0) return toast('Producto sin tamaños/precios');
-  if(p.tamanos.length === 1) {
+  const kgRef = p.tamanos.find(t => t.nombre === '1 Kg');
+  const soloUnTamano = p.tamanos.length === 1 && !kgRef;
+  if(soloUnTamano) {
     addToCart(p, p.tamanos[0]);
-  } else {
-    // Show size selector
-    const box = document.getElementById('sizeSelectBox');
-    box.innerHTML = `<h3>${p.nombre}</h3>`;
-    p.tamanos.forEach(t => {
-      const btn = document.createElement('button');
-      btn.innerHTML = `${t.nombre} <span class="s-price">$${t.precio.toLocaleString()}</span>`;
-      btn.onclick = () => {
-        addToCart(p, t);
-        document.getElementById('sizeSelectOverlay').classList.remove('show');
-      };
-      box.appendChild(btn);
-    });
-    const cancelBtn = document.createElement('button');
-    cancelBtn.textContent = 'Cancelar';
-    cancelBtn.style.color = 'var(--rojo)';
-    cancelBtn.onclick = () => document.getElementById('sizeSelectOverlay').classList.remove('show');
-    box.appendChild(cancelBtn);
-    document.getElementById('sizeSelectOverlay').classList.add('show');
+    return;
   }
+  // Show size selector (+ peso libre si el corte tiene referencia de 1 Kg)
+  const box = document.getElementById('sizeSelectBox');
+  box.innerHTML = `<h3>${p.nombre}</h3>`;
+  p.tamanos.forEach(t => {
+    const btn = document.createElement('button');
+    btn.innerHTML = `${t.nombre} <span class="s-price">$${t.precio.toLocaleString()}</span>`;
+    btn.onclick = () => {
+      addToCart(p, t);
+      document.getElementById('sizeSelectOverlay').classList.remove('show');
+    };
+    box.appendChild(btn);
+  });
+  if(kgRef) {
+    const pesoBtn = document.createElement('button');
+    pesoBtn.style.borderColor = 'var(--verde,#27ae60)';
+    pesoBtn.style.color = 'var(--verde,#27ae60)';
+    pesoBtn.innerHTML = `⚖️ Peso libre <span class="s-price">$${kgRef.precio.toLocaleString()}/kg</span>`;
+    pesoBtn.onclick = () => {
+      document.getElementById('sizeSelectOverlay').classList.remove('show');
+      abrirPesoLibre(p, kgRef.precio);
+    };
+    box.appendChild(pesoBtn);
+  }
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Cancelar';
+  cancelBtn.style.color = 'var(--rojo)';
+  cancelBtn.onclick = () => document.getElementById('sizeSelectOverlay').classList.remove('show');
+  box.appendChild(cancelBtn);
+  document.getElementById('sizeSelectOverlay').classList.add('show');
+}
+
+function abrirPesoLibre(p, precioKg) {
+  document.getElementById('pesoLibreNombre').textContent = p.nombre;
+  document.getElementById('pesoLibrePrecioKg').textContent = `Precio: $${precioKg.toLocaleString()} por kg`;
+  const input = document.getElementById('pesoLibreInput');
+  input.value = '';
+  document.getElementById('pesoLibreTotal').textContent = '$0';
+
+  const actualizarTotal = () => {
+    const peso = parseFloat(input.value.replace(',', '.')) || 0;
+    const total = Math.round(peso * precioKg);
+    document.getElementById('pesoLibreTotal').textContent = '$' + total.toLocaleString();
+  };
+  input.oninput = actualizarTotal;
+
+  document.getElementById('pesoLibreConfirmBtn').onclick = () => {
+    const peso = parseFloat(input.value.replace(',', '.')) || 0;
+    if(peso <= 0) return toast('Ingresá un peso válido');
+    const total = Math.round(peso * precioKg);
+    addToCart(p, { nombre: `${peso} kg`, precio: total });
+    document.getElementById('pesoLibreOverlay').classList.remove('show');
+  };
+
+  document.getElementById('pesoLibreOverlay').classList.add('show');
+  setTimeout(() => input.focus(), 100);
 }
 
 function addToCart(producto, tamano) {
