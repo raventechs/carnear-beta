@@ -459,6 +459,7 @@ var __rtPWA = (function() {
       <button class="caja-mode-btn active" onclick="setCajaMode('catalogo')">🥩 Catálogo</button>
       <button class="caja-mode-btn" onclick="setCajaMode('importe')">💰 Importe</button>
       <button class="caja-mode-btn" id="modeTicketBtn" onclick="setCajaMode('ticket')" style="display:none">📸 Ticket</button>
+      <button class="caja-mode-btn" onclick="setCajaMode('lectora')">📟 Lectora</button>
     </div>
     <div class="caja-mode-content active" id="modeCatalogo">
       <div class="grupos-bar" id="gruposBar"></div>
@@ -479,6 +480,24 @@ var __rtPWA = (function() {
         <button onclick="registrarVentaRapida()" style="width:100%;background:var(--verde,#27ae60);color:#fff;border:none;border-radius:var(--radius);padding:14px;font-weight:700;font-size:1rem;cursor:pointer;">✅ Cobrar</button>
       </div>
     </div>
+    <!-- LECTORA DE CODIGOS (preview, no funcional aún) -->
+    <div class="caja-mode-content" id="modeLectora">
+      <div style="text-align:center;padding:20px 10px">
+        <div style="font-size:40px;margin-bottom:10px">📟</div>
+        <h3 style="margin-bottom:8px">Lectora de códigos de balanza</h3>
+        <p style="font-size:0.82rem;color:var(--text2);line-height:1.5;max-width:280px;margin:0 auto 18px">
+          Escaneá el ticket de la balanza y el corte se carga solo, con el peso exacto.
+        </p>
+        <div style="background:var(--bg2,#0d1413);border:1px dashed var(--borde);border-radius:12px;padding:16px;margin-bottom:14px">
+          <div style="font-size:0.72rem;color:var(--text2);margin-bottom:6px">ESPERANDO ESCANEO...</div>
+          <div style="font-family:monospace;font-size:1.1rem;color:var(--verde,#27ae60);letter-spacing:2px">20-00123-01750-4</div>
+        </div>
+        <div style="background:rgba(39,174,96,0.08);border:1px solid rgba(39,174,96,0.25);border-radius:10px;padding:10px;font-size:0.78rem;color:var(--text2)">
+          🔜 Próximamente — funciona con lectores Bluetooth o USB, sin necesidad de PC.
+        </div>
+      </div>
+    </div>
+
     <!-- TICKET MODE -->
     <div class="caja-mode-content" id="modeTicket">
       <div style="text-align:center;padding:8px 0">
@@ -2566,7 +2585,7 @@ async function enviarResumenWA() {
 function setCajaMode(mode) {
   document.querySelectorAll('.caja-mode-content').forEach(d => d.classList.remove('active'));
   document.querySelectorAll('.caja-mode-btn').forEach(b => b.classList.remove('active'));
-  const ids = { catalogo: 'modeCatalogo', importe: 'modeImporte', ticket: 'modeTicket' };
+  const ids = { catalogo: 'modeCatalogo', importe: 'modeImporte', ticket: 'modeTicket', lectora: 'modeLectora' };
   const el = document.getElementById(ids[mode]);
   if (el) el.classList.add('active');
   document.querySelectorAll('#cajaModeBar .caja-mode-btn').forEach(b => {
