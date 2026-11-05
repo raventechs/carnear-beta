@@ -1,16 +1,20 @@
 <!DOCTYPE html>
 <!--
   ════════════════════════════════════════════════════════════
-  CARNEAR — CAJA REGISTRADORA PARA CARNICERÍAS — v2.8-beta
+  CARNEAR — CAJA REGISTRADORA PARA CARNICERÍAS — v2.9-tw1 (beta Training Wheels)
   Fecha de esta versión: 25/10/2026
-  v2.8-beta: BACKUP ESTÁNDAR devuelto (se había perdido al reescribir): automático diario que baja el archivo, botón manual y restaurar
+  v2.9-tw1: TRAINING WHEELS. La misma app con dos modos: PRINCIPIANTE (cobrar un importe + medio de pago, historial de hoy,
+  sin catálogo ni stock) y AVANZADO (todo lo anterior). El cliente nuevo entra como Principiante; el admin lo pasa a Avanzado
+  con un botón (menú oculto → Mis clientes). Cuentas anteriores (sin campo "modo") siguen como Avanzado, sin cambios.
+  En Avanzado: carga inicial guiada del catálogo (cortes de carnicería, sin borrar nada) y ajuste de precios en bloque con
+  vista previa y deshacer. Incluye la VENTA POR KILOS de la beta v2.8.
+  v2.7: BACKUP ESTÁNDAR devuelto (se había perdido al reescribir): automático diario que baja el archivo, botón manual y restaurar
   en Configuración. Incluye sucursales, gastos, proveedores y vuelve las fechas a su tipo al restaurar.
-  v2.7-beta: VENTA POR KILOS (se quitó 'Importe' y la elección de tamaño: se carga el peso, con atajos ¼ ½ 1 kg).
   v2.6: MODO PRÁCTICA (Config → 🎓 Modo Práctica): carga una carnicería de mentira con 3 sucursales,
   7 días de ventas, gastos y proveedores marcados _demo; un botón los quita sin tocar datos reales.
   Cambios respecto a v1.2: Gastos y Proveedores como features
   plus (bloqueados por defecto, se activan desde panel RavenTechs
-  5 toques + PIN 2580). Gastos: CRUD completo con filtro
+  5 toques + cuenta admin verificada). Gastos: CRUD completo con filtro
   hoy/semana/mes, monto, método de pago, proveedor opcional.
   Proveedores: CRUD con nombre, teléfono, rubro, WhatsApp.
   Dashboard muestra balance (ingresos - gastos del mes) cuando
@@ -33,6 +37,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="CarneAR">
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="/icon-512-apple-180.png">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <style>
     :root {
       --bg: #fafafa; --surface: #ffffff; --text: #1a1a1a; --text2: #555;
@@ -288,8 +294,22 @@
     .btn-cerrar-modal{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text2);line-height:1;}
 
     .peso-chip{background:var(--bg2,#0d1413);border:1px solid var(--borde);color:var(--text);border-radius:999px;padding:8px 16px;font-weight:700;font-size:0.9rem;cursor:pointer}
-  .peso-chip:active{border-color:var(--verde,#27ae60);color:var(--verde,#27ae60)}
-</style>
+    .peso-chip:active{border-color:var(--verde,#27ae60);color:var(--verde,#27ae60)}
+    /* ── Training Wheels ── */
+    .tw-only-simple{display:none}
+    body.tw-simple .tw-only-simple{display:block}
+    body.tw-simple .tw-chips.tw-only-simple{display:grid}
+    body.tw-simple .tw-hoy.tw-only-simple{display:flex}
+    body.tw-simple .tw-adv{display:none !important}
+    .tw-chips{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+    .tw-chip{padding:14px 8px;border-radius:14px;border:2px solid var(--borde);background:var(--surface);color:var(--text);font-size:0.95rem;font-weight:700;cursor:pointer}
+    .tw-chip.on{border-color:var(--accent);background:var(--accent);color:#fff}
+    .tw-hoy{display:flex;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--borde);border-radius:14px;padding:12px 14px;margin:0 12px 12px}
+    .tw-hoy b{font-size:1.15rem;color:var(--accent)}
+    .tw-hint{background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.25);border-radius:14px;padding:12px 14px;margin:12px;font-size:0.85rem;line-height:1.5;color:var(--text)}
+    .tw-hint button{margin-top:8px;padding:6px 12px;border-radius:10px;border:1px solid var(--borde);background:var(--surface);color:var(--text2);font-size:0.8rem;cursor:pointer}
+    .tw-modo-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700}
+  </style>
 <script>
 // RavenTechs PWA Banner v1.1 — en el HEAD para capturar beforeinstallprompt temprano
 var __rtPWA = (function() {
@@ -324,6 +344,109 @@ var __rtPWA = (function() {
       localStorage.setItem('pwa_rechazado', '1');
     }
   };
+})();
+</script>
+<script id="rt-pwa-v2">
+/* RavenTechs · Cartel "Instalar la app" v2 — Android/Chrome (botón Instalar) + iPhone/Safari (instrucciones). Se oculta si la app ya está instalada. */
+(function(){
+  function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
+  var standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true;
+  if(standalone)return;
+  var DIAS=7*864e5, deferred=null, ua=navigator.userAgent||'';
+  var esIOS=/iPhone|iPad|iPod/i.test(ua)||(/Macintosh/i.test(ua)&&navigator.maxTouchPoints>1);
+  function descartado(){var t=parseInt(ls('rt_pwa_no')||'0',10);return t&&(Date.now()-t)<DIAS;}
+  function nombre(){var m=document.querySelector('meta[name="apple-mobile-web-app-title"]');return (m&&m.content)||document.title||'la app';}
+  function color(){var m=document.querySelector('meta[name="theme-color"]');var c=m&&m.content;return (c&&/^#[0-9a-f]{6}$/i.test(c)&&parseInt(c.slice(1,3),16)+parseInt(c.slice(3,5),16)+parseInt(c.slice(5,7),16)<600)?c:'#0f1e3d';}
+  function offBottom(){var off=0;try{var els=document.body?document.body.querySelectorAll('*'):[];for(var k=0;k<els.length&&k<4000;k++){var e=els[k];if(e.id==='rt-pwa-banner')continue;var cs=getComputedStyle(e);if(cs.position!=='fixed'||cs.display==='none'||cs.visibility==='hidden')continue;var r=e.getBoundingClientRect();if(r.height>30&&r.height<160&&r.width>=innerWidth*0.8&&Math.abs(innerHeight-r.bottom)<2)off=Math.max(off,r.height);}}catch(x){}return off;}
+  function quitar(){var b=document.getElementById('rt-pwa-banner');if(b)b.remove();}
+  function mostrar(modo){
+    if(document.getElementById('rt-pwa-banner')||descartado())return;
+    var old=document.getElementById('bannerPWA');if(old)old.style.setProperty('display','none','important');
+    var b=document.createElement('div');b.id='rt-pwa-banner';b.setAttribute('role','dialog');
+    b.style.cssText='position:fixed;left:10px;right:10px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:2147483000;background:'+color()+';color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 6px 24px rgba(0,0,0,.4);font:14px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
+    b.style.bottom='calc('+(offBottom()+12)+'px + env(safe-area-inset-bottom,0px))';
+    var t=document.createElement('span');t.style.flex='1';
+    if(modo==='ios'){t.innerHTML='📲 Para instalar <b></b>: tocá <b>Compartir</b> <span style="font-size:17px">⬆️</span> y elegí <b>«Agregar a inicio»</b>.';t.getElementsByTagName('b')[0].textContent=nombre();}
+    else{t.innerHTML='📲 <b>Instalá '+nombre().replace(/[<>&]/g,'')+'</b> en tu teléfono para abrirla como una app.';}
+    b.appendChild(t);
+    if(modo!=='ios'){var i=document.createElement('button');i.type='button';i.textContent='Instalar';i.style.cssText='background:#f0b84a;color:#10203d;border:0;border-radius:10px;padding:9px 14px;font-weight:800;font-size:14px;cursor:pointer';
+      i.onclick=function(){if(!deferred)return;quitar();deferred.prompt();deferred.userChoice.then(function(){deferred=null;}).catch(function(){});};b.appendChild(i);}
+    var x=document.createElement('button');x.type='button';x.setAttribute('aria-label','Cerrar');x.textContent='✕';x.style.cssText='background:none;border:0;color:#fff;font-size:20px;line-height:1;cursor:pointer;padding:4px 6px';
+    x.onclick=function(){ls('rt_pwa_no',String(Date.now()));quitar();};b.appendChild(x);
+    (document.body||document.documentElement).appendChild(b);
+  }
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;setTimeout(function(){if(deferred)mostrar('android');},2000);});
+  window.addEventListener('appinstalled',function(){deferred=null;quitar();ls('rt_pwa_no',String(Date.now()+365*864e5-DIAS));});
+  if(esIOS){window.addEventListener('load',function(){setTimeout(function(){mostrar('ios');},3500);});}
+  window.__rtPWA2={mostrar:mostrar};
+})();
+</script>
+<script id="rt-login-v1">
+/* RavenTechs · Login v1 — (A) «Continuar con Google» arriba y email como segunda opción; (B) recuerda la cuenta Google para no volver a elegirla (login_hint). No toca datos. */
+(function(){
+  function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
+  /* B — recordar la cuenta Google: se lee del usuario que Firebase ya guardó en el teléfono */
+  function capturar(){
+    try{
+      if(!indexedDB||!indexedDB.databases)return;
+      indexedDB.databases().then(function(l){
+        if(!l.some(function(d){return d.name==='firebaseLocalStorageDb';}))return;
+        var r=indexedDB.open('firebaseLocalStorageDb');
+        r.onsuccess=function(){var db=r.result;try{
+          if(!db.objectStoreNames.contains('firebaseLocalStorage')){db.close();return;}
+          var q=db.transaction('firebaseLocalStorage','readonly').objectStore('firebaseLocalStorage').getAll();
+          q.onsuccess=function(){var adm=false;(q.result||[]).forEach(function(it){var u=it&&it.value;
+            if(u&&u.email&&!u.isAnonymous&&(u.providerData||[]).some(function(p){return p.providerId==='google.com';}))ls('rt_google_email',u.email);
+            if(u&&u.email&&String(u.email).toLowerCase()==='rgaraventa@gmail.com'&&u.emailVerified===true)adm=true;});
+            try{if(adm)localStorage.setItem('rt_admin','1');else localStorage.removeItem('rt_admin');}catch(e){}
+            db.close();};
+        }catch(e){try{db.close();}catch(x){}}};
+      }).catch(function(){});
+    }catch(e){}
+  }
+  capturar();setInterval(capturar,8000);document.addEventListener('visibilitychange',capturar);
+  window.addEventListener('focus',capturar);
+  /* Puerta del panel interno: solo la cuenta admin (la seguridad real la dan las reglas de Firestore) */
+  window.rtIsAdmin=function(){capturar();return ls('rt_admin')==='1';};
+  window.rtHasHint=function(){return !!ls('rt_google_email');};
+  window.rtProv=function(p){var e=ls('rt_google_email');try{if(e&&p&&p.setCustomParameters)p.setCustomParameters({login_hint:e});}catch(x){}return p;};
+  /* A — Google primero */
+  var OR=/^(o|ó|or|—|-|–|o ingresá con|o ingresa con)$/i;
+  function visible(e){return !!(e&&(e.offsetWidth||e.offsetHeight||e.getClientRects().length));}
+  function ordenar(){
+    var bs=[].slice.call(document.querySelectorAll('button'));
+    bs.forEach(function(g){
+      if(g.getAttribute('data-rt-login'))return;
+      var tx=(g.textContent||'').trim();
+      var esG=/google/i.test(g.id||'')||/google/i.test(typeof g.className==='string'?g.className:'')||(/google/i.test(tx)&&tx.length<60);
+      if(!esG)return;
+      var a=g.parentElement,F=null;
+      while(a&&a!==document.body){
+        var inp=a.querySelector('input[type=email],input[type=password],input[type=text],input:not([type])');
+        if(inp&&!g.contains(inp)){
+          var c=a.firstElementChild;F=null;
+          while(c){if(c.contains(inp)){F=c;break;}c=c.nextElementSibling;}
+          var G=g;while(G&&G.parentElement!==a)G=G.parentElement;
+          if(F&&G&&F!==G&&(F.compareDocumentPosition(G)&Node.DOCUMENT_POSITION_FOLLOWING)){
+            g.setAttribute('data-rt-login','1');
+            var prev=G.previousElementSibling;
+            if(prev&&prev!==F&&OR.test((prev.textContent||'').trim())&&!prev.querySelector('input,button'))prev.style.display='none';
+            G.style.marginBottom='10px';G.style.width='100%';
+            a.insertBefore(G,F);
+            var d=document.createElement('div');d.className='rt-or';
+            d.style.cssText='display:flex;align-items:center;gap:8px;margin:6px 0 12px;font-size:12px;opacity:.7;text-align:center';
+            d.innerHTML='<span style="flex:1;height:1px;background:currentColor;opacity:.35"></span>o con tu email<span style="flex:1;height:1px;background:currentColor;opacity:.35"></span>';
+            a.insertBefore(d,F);
+            return;
+          }
+          if(F)return;
+        }
+        a=a.parentElement;
+      }
+    });
+  }
+  function iniciar(){ordenar();try{var mo=new MutationObserver(function(){ordenar();});mo.observe(document.documentElement,{childList:true,subtree:true});setTimeout(function(){mo.disconnect();},20000);}catch(e){}}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciar);else iniciar();
 })();
 </script>
 </head>
@@ -462,16 +585,40 @@ var __rtPWA = (function() {
   <!-- CAJA -->
   <div class="section" id="sec-caja">
     <!-- MODE BAR CAJA -->
-    <div class="caja-mode-bar" id="cajaModeBar">
+    <div id="twAyudaInicial"></div>
+    <div class="caja-mode-bar tw-adv" id="cajaModeBar">
       <button class="caja-mode-btn active" onclick="setCajaMode('catalogo')">🥩 Catálogo</button>
+      <button class="caja-mode-btn" onclick="setCajaMode('importe')">💰 Importe</button>
       <button class="caja-mode-btn" id="modeTicketBtn" onclick="setCajaMode('ticket')" style="display:none">📸 Ticket</button>
     </div>
-    <div class="caja-mode-content active" id="modeCatalogo">
+    <div class="caja-mode-content active tw-adv" id="modeCatalogo">
       <div class="grupos-bar" id="gruposBar"></div>
       <div class="pos-grid" id="posGrid"></div>
     </div>
+    <!-- IMPORTE MODE -->
+    <div class="caja-mode-content" id="modeImporte">
+      <div style="padding:8px 0">
+        <p style="font-size:0.8rem;color:var(--text2);margin-bottom:10px" class="tw-adv">Ingresá el monto y cobrá sin seleccionar productos.</p>
+        <p style="font-size:0.9rem;color:var(--text2);margin-bottom:10px" class="tw-only-simple">1) Escribí cuánto cobraste · 2) Elegí cómo te pagaron · 3) Tocá Cobrar</p>
+        <input type="number" id="vrMonto" class="importe-monto-input" placeholder="$ 0" min="0" inputmode="decimal">
+        <div class="tw-chips tw-only-simple" id="twMetodoChips">
+          <button type="button" class="tw-chip on" data-m="efectivo">💵 Efectivo</button>
+          <button type="button" class="tw-chip" data-m="transferencia">📲 Transferencia</button>
+          <button type="button" class="tw-chip" data-m="tarjeta">💳 Tarjeta</button>
+          <button type="button" class="tw-chip" data-m="mercadopago">🔵 MercadoPago</button>
+        </div>
+        <input type="text" id="vrDesc" placeholder="¿Qué vendiste? (opcional)" style="margin-bottom:10px">
+        <select id="vrMetodo" class="tw-adv" style="margin-bottom:10px">
+          <option value="efectivo">💵 Efectivo</option>
+          <option value="transferencia">📲 Transferencia</option>
+          <option value="tarjeta">💳 Tarjeta</option>
+          <option value="mercadopago">🔵 MercadoPago</option>
+        </select>
+        <button onclick="registrarVentaRapida()" style="width:100%;background:var(--verde,#27ae60);color:#fff;border:none;border-radius:var(--radius);padding:14px;font-weight:700;font-size:1rem;cursor:pointer;">✅ Cobrar</button>
+      </div>
+    </div>
     <!-- TICKET MODE -->
-    <div class="caja-mode-content" id="modeTicket">
+    <div class="caja-mode-content tw-adv" id="modeTicket">
       <div style="text-align:center;padding:8px 0">
         <p style="font-size:0.82rem;color:var(--text2);margin-bottom:12px">Sacá foto al ticket de balanza y la IA carga los items.</p>
         <input type="file" id="inputTicket" accept="image/*" capture="environment" style="display:none" onchange="window.leerTicket(this)">
@@ -483,7 +630,7 @@ var __rtPWA = (function() {
       </div>
     </div>
 
-    <div class="cart" id="cartArea">
+    <div class="cart tw-adv" id="cartArea">
       <h3>🛒 Carrito <span id="cartCount">(0)</span></h3>
       <div id="cartList"></div>
       <div class="cart-total">Total: $<span id="cartTotal">0</span></div>
@@ -493,6 +640,7 @@ var __rtPWA = (function() {
       </div>
     </div>
 
+    <div class="tw-hoy tw-only-simple" id="twHoy"><span>Hoy llevás</span><b id="twHoyTotal">$0</b></div>
     <!-- CIERRE DE CAJA -->
     <div class="config-group" style="margin:12px;">
       <h3>🔒 Cierre de caja</h3>
@@ -566,12 +714,19 @@ var __rtPWA = (function() {
   <!-- CONFIG -->
   <div class="section" id="sec-config">
     <h2>⚙️ Configuración</h2>
-    <div class="config-group">
+    <div class="config-group tw-only-simple" id="twVersionCompleta">
+      <h3>🚀 Versión completa</h3>
+      <p style="font-size:0.82rem;color:var(--text2);margin-bottom:10px;line-height:1.5">Cuando quieras más: catálogo de cortes, venta por kilos, stock, gastos, proveedores y varias sucursales. Tus ventas de hoy se mantienen. Te avisamos por WhatsApp y te la habilitamos.</p>
+      <button class="btn-save" style="width:100%" onclick="twPedirCompleta()">🚀 Quiero la versión completa</button>
+    </div>
+    <div class="config-group tw-adv">
       <h3>Catálogo</h3>
       <button class="btn-warning" id="configResetBtn">🔄 Restablecer catálogo de ejemplo</button>
       <button class="btn-warning" id="configCleanDupBtn">🧹 Limpiar duplicados</button>
+      <button class="btn-warning" id="configAjustePreciosBtn" onclick="twAbrirAjustePrecios()">💲 Ajustar precios en bloque</button>
     </div>
-    <div class="config-group">
+<div class="config-group"><h3 class="card-title" style="font-size:1rem;margin:0 0 6px">❓ Instructivo</h3><p style="font-size:13px;opacity:.8;margin-bottom:10px">Guía paso a paso de cómo usar la app, con preguntas frecuentes.</p><a href="ayuda/" target="_blank" rel="noopener" style="display:inline-block;padding:10px 16px;border-radius:10px;background:#25D366;color:#fff;font-weight:700;text-decoration:none">📖 Abrir instructivo</a></div>
+    <div class="config-group tw-adv">
       <h3>🎓 Modo Práctica</h3>
       <p style="font-size:0.78rem;color:var(--text2);margin-bottom:10px">Carga una carnicería de ejemplo con 3 sucursales, ventas de la última semana, gastos y proveedores. Sirve para aprender o mostrar la app. Los datos de práctica se pueden quitar con un botón sin tocar los tuyos.</p>
       <button class="btn-warning" id="configPracticaBtn">🎓 Cargar empresa de práctica</button>
@@ -590,7 +745,7 @@ var __rtPWA = (function() {
       <button class="btn-danger" id="configLogoutBtn">🚪 Cerrar sesión</button>
     </div>
     <!-- SUCURSALES (visible cuando limiteSucursales > 1) -->
-    <div class="config-group hidden" id="sucursalesConfigGroup">
+    <div class="config-group hidden tw-adv" id="sucursalesConfigGroup">
       <h3>🏪 Mis sucursales</h3>
       <p style="font-size:0.78rem;color:var(--text2);margin-bottom:10px">Gestioná tus sucursales y compartí el acceso al cajero.</p>
       <div id="sucursalesConfigList"></div>
@@ -606,8 +761,8 @@ var __rtPWA = (function() {
   <!-- CUENTA INACTIVA -->
   <div class="section" id="sec-inactivo" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;text-align:center;padding:32px 24px;">
     <div style="font-size:56px;margin-bottom:16px">🔒</div>
-    <h2 style="color:var(--accent);margin-bottom:10px">Cuenta inactiva</h2>
-    <p style="color:var(--text2);font-size:0.9rem;line-height:1.6;max-width:300px;margin-bottom:24px">Tu cuenta está desactivada. Contactá a RavenTechs para activarla o renovar tu suscripción.</p>
+    <h2 id="inactivoTitulo" style="color:var(--accent);margin-bottom:10px">Cuenta inactiva</h2>
+    <p id="inactivoTexto" style="color:var(--text2);font-size:0.9rem;line-height:1.6;max-width:300px;margin-bottom:24px">Tu cuenta está desactivada. Contactá a RavenTechs para activarla o renovar tu suscripción.</p>
     <a href="https://wa.me/5491136547592?text=Hola%20RavenTechs%2C%20necesito%20reactivar%20mi%20cuenta%20de%20CarneAR" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:13px 24px;border-radius:10px;font-weight:700;font-size:0.95rem;text-decoration:none;margin-bottom:12px">📲 Contactar por WhatsApp</a>
     <button onclick="auth.signOut()" style="background:none;border:1px solid var(--borde);border-radius:10px;padding:10px 20px;font-size:0.85rem;color:var(--text2);cursor:pointer;">Cerrar sesión</button>
   </div>
@@ -773,7 +928,7 @@ const db = firebase.firestore();
 
 // ══════════ CONSTANTS ══════════
 const PIN_CAJERO = '2468';
-const PIN_ADMIN = '2580';
+const PIN_ADMIN = '';
 const ADMIN_EMAIL = 'rgaraventa@gmail.com';
 
 const GRUPOS_MAP = {
@@ -898,6 +1053,10 @@ let features = { gastos: false, proveedores: false };
 let carrito = [];
 let currentGrupo = null;
 let logoTaps = 0;
+// Training Wheels: 'principiante' | 'avanzado'. Sin campo en la cuenta = avanzado (cuentas anteriores no cambian).
+let modoApp = 'avanzado';
+function esPrincipiante() { return modoApp === 'principiante' && userRole === 'dueno'; }
+function aplicarModoVisual() { document.body.classList.toggle('tw-simple', esPrincipiante()); }
 let logoTimer = null;
 let editingProductId = null;
 let editingStockId = null;
@@ -912,6 +1071,14 @@ let isDark = localStorage.getItem('carnear-dark') === '1';
 
 // ══════════ TABS CONFIG ══════════
 function getTabsForRole() {
+  // ── Principiante: solo cobrar, ver lo de hoy y ayuda ───────
+  if (esPrincipiante()) {
+    return [
+      {id:'caja',      icon:'💰', label:'Cobrar'},
+      {id:'historial', icon:'📜', label:'Hoy'},
+      {id:'config',    icon:'⚙️', label:'Más'}
+    ];
+  }
   // ── Cajero (acceso por link WhatsApp) ──────────────────────
   if (userRole === 'cajero') {
     // Cajero/encargado: opera la sucursal completa
@@ -950,8 +1117,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Detectar link de cajero
   const _urlParams = new URLSearchParams(location.search);
-  const _codigoLink = _urlParams.get('s');
-  if (_codigoLink) {
+  // El código de sucursal se recuerda en el dispositivo: la app instalada (PWA) abre sin ?s= y antes quedaba sin sucursal
+  const _codigoUrl = _urlParams.get('s');
+  let _codigoLink = _codigoUrl;
+  try { if (_codigoLink) localStorage.setItem('carnear_cod_cajero', _codigoLink); else _codigoLink = localStorage.getItem('carnear_cod_cajero'); } catch(_) {}
+  if (_codigoUrl) {
     auth.signInAnonymously().catch(e => logError('anonAuth', e.message));
   }
 
@@ -959,6 +1129,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loading').style.display = 'none';
     auth.onAuthStateChanged(user => {
       if (user && !user.isAnonymous) {
+        try { localStorage.removeItem('carnear_cod_cajero'); } catch(_) {}   // un dueño/admin iniciando sesión: este dispositivo deja de ser caja
         if (appRunning && currentUser && currentUser.uid === user.uid) return;
         appRunning = true;
         // Verificar cliente y cargar sus features
@@ -1058,9 +1229,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.modal-overlay').forEach(ov => {
     ov.addEventListener('click', e => { if(e.target===ov) ov.classList.remove('show'); });
   });
-  document.getElementById('pesoLibreOverlay').addEventListener('click', e => {
-    if(e.target.id==='pesoLibreOverlay') e.target.classList.remove('show');
-  });
   document.getElementById('sizeSelectOverlay').addEventListener('click', e => {
     if(e.target.id==='sizeSelectOverlay') e.target.classList.remove('show');
   });
@@ -1087,7 +1255,7 @@ function showError(msg) { document.getElementById('loginError').textContent = ms
 
 async function loginGoogle() {
   try {
-    await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+    await auth.signInWithPopup((window.rtProv||function(p){return p})(new firebase.auth.GoogleAuthProvider()));
   } catch(e) { showError(e.message); }
 }
 
@@ -1112,7 +1280,7 @@ function loginCajero() {
   openPin('PIN Punto de Venta');
 }
 
-// ══════════ BACKUP ESTÁNDAR 2.8-beta ══════════
+// ══════════ BACKUP ESTÁNDAR 2.7 ══════════
 // Automático: una vez por día al entrar (solo el dueño). Baja el archivo JSON al dispositivo y deja una copia
 // en IndexedDB (las últimas 7). Manual y restaurar: Configuración → 💾 Backup de datos.
 // Las fechas de Firestore (Timestamp) se guardan con una marca reversible para volver a ser fechas al restaurar.
@@ -1188,7 +1356,7 @@ async function generarBackup(silencioso) {
     const linksSnap = await db.collection(BK_LINKS).where('uid', '==', uid).get();
     const fecha = _bkHoy();
     const backup = {
-      app: BK_APP, version: '2.8-beta', fecha: new Date().toISOString(), uid: uid,
+      app: BK_APP, version: '2.7', fecha: new Date().toISOString(), uid: uid,
       negocio: raiz.exists ? _bkSer(raiz.data()) : {}, datos: datos, sucursales: sucursales,
       links: linksSnap.docs.map(d => Object.assign({ _id: d.id }, d.data()))
     };
@@ -1255,18 +1423,20 @@ function initApp() {
   document.getElementById('login').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('mobNav').classList.remove('hidden');
+  aplicarModoVisual();
   renderTabs(getTabsForRole());
-  if (userRole === 'dueno' && limiteSucursales > 1) {
+  if (userRole === 'dueno' && limiteSucursales > 1 && !esPrincipiante()) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     const sd = document.getElementById('sec-dashboard');
     if (sd) sd.classList.add('active');
   } else {
-    switchTab(userRole === 'dueno' ? 'inicio' : 'caja');
+    switchTab(userRole === 'dueno' && !esPrincipiante() ? 'inicio' : 'caja');
   }
   subscribeData();
   if (typeof initOffline === 'function') initOffline();
   if (typeof cargarWhatsapp === 'function') cargarWhatsapp();
   if (typeof chequearBackupDiario === 'function') chequearBackupDiario();
+  if (!esPrincipiante()) setTimeout(twChequearCargaInicial, 2500);
 }
 
 function renderTabs(tabs) {
@@ -1296,7 +1466,10 @@ function switchTab(id) {
   const sec = document.getElementById('sec-'+id);
   if(sec) sec.classList.add('active');
   document.querySelectorAll(`[data-tab="${id}"]`).forEach(b => b.classList.add('active'));
-  if(id==='caja') { renderPOS(); actualizarBotonesModoCaja(); setCajaMode('catalogo'); }
+  if(id==='caja') {
+    if (esPrincipiante()) { setCajaMode('importe'); twActualizarHoy(); twMostrarAyudaInicial(); }
+    else { renderPOS(); actualizarBotonesModoCaja(); setCajaMode('catalogo'); }
+  }
   if(id==='historial') loadHistorial('hoy');
   if(id==='inicio') {
     if (enSucursal || userRole === 'cajero') loadDashboard();
@@ -2313,14 +2486,8 @@ function handleLogoTap() {
   logoTimer = setTimeout(() => logoTaps=0, 2000);
   if(logoTaps >= 5) {
     logoTaps = 0;
-    pinCallback = (pin) => {
-      if(pin === PIN_ADMIN) {
-        showFeaturesPanel();
-        return true;
-      }
-      return false;
-    };
-    openPin('PIN RavenTechs');
+    /* Menú oculto: sin PIN. Solo abre si entraste con la cuenta admin (las reglas de Firestore lo respaldan). */
+    if(window.rtIsAdmin&&window.rtIsAdmin()) showFeaturesPanel();
   }
 }
 
@@ -2378,12 +2545,18 @@ function toast(msg) {
 async function iniciarCajeroLink(codigo) {
   try {
     const doc = await db.collection('carnearLinks').doc(codigo).get();
-    if (!doc.exists) { showLogin(); return; }
+    if (!doc.exists) { try { localStorage.removeItem('carnear_cod_cajero'); } catch(_) {} showLogin(); return; }
     const d = doc.data();
     ownerUid = d.uid;
+    if (!auth.currentUser) { try { await auth.signInAnonymously(); } catch(_) {} }
     currentUser = auth.currentUser;
     currentSucursal = { id: d.sucursalId, nombre: d.nomSucursal || 'Sucursal' };
     userRole = 'cajero';
+    // Registra a este cajero como miembro de SU sucursal (las reglas solo dejan operar a los registrados con un código válido)
+    try {
+      await db.collection('negocios').doc(d.uid).collection('cajeros').doc(currentUser.uid)
+        .set({ codigo, sucursalId: d.sucursalId, ultimoAcceso: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+    } catch(e) { console.warn('cajero', e); }
     try {
       const neg = await db.collection('negocios').doc(d.uid).get();
       if (neg.exists && neg.data().features) features = Object.assign(features, neg.data().features);
@@ -2505,8 +2678,41 @@ function esAdmin(email) {
   return email === ADMIN_EMAIL;
 }
 
-function mostrarInactivo() {
+const RT_DEMO_DIAS = 14;
+function mostrarCartelDemo(dias) {
+  if (document.getElementById('rtDemoCartel')) return;
+  const urgente = dias <= 3;
+  const b = document.createElement('a');
+  b.id = 'rtDemoCartel';
+  b.href = 'https://wa.me/5491136547592?text=' + encodeURIComponent('Hola RavenTechs, quiero activar mi cuenta de CarneAR');
+  b.target = '_blank';
+  b.textContent = '🎓 Prueba gratis: ' + (dias === 1 ? 'te queda 1 día' : 'te quedan ' + dias + ' días') + ' · Activar mi cuenta';
+  b.style.cssText = 'position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:50%;transform:translateX(-50%);z-index:9000;padding:5px 14px;border-radius:99px;font:600 12px system-ui,sans-serif;text-decoration:none;white-space:nowrap;color:#fff;background:' + (urgente ? '#dc2626' : '#1d4ed8') + ';box-shadow:0 2px 8px rgba(0,0,0,.25);' + (urgente ? 'animation:rtDemoBlink 1.2s ease-in-out infinite;' : '');
+  const st = document.createElement('style'); st.textContent = '@keyframes rtDemoBlink{50%{opacity:.55}}';
+  document.head.appendChild(st); document.body.appendChild(b);
+}
+// Admin: pasar una cuenta de prueba a cliente real (quita el vencimiento) o darle 7 días más
+async function pasarACliente(email) {
+  if (!confirm('¿Pasar ' + email + ' a cliente real? Se quita el vencimiento de la prueba.')) return;
+  try { await db.collection('clientes').doc(email).update({ demoHasta: null }); toast('Cliente real: sin vencimiento'); cargarMisClientes(); }
+  catch(e) { toast('Error: ' + e.message); }
+}
+async function extenderDemo(email, dias) {
+  try {
+    const snap = await db.collection('clientes').doc(email).get();
+    const d = snap.data() || {};
+    const base = Math.max(Date.now(), (d.demoHasta && d.demoHasta.toMillis) ? d.demoHasta.toMillis() : Date.now());
+    await db.collection('clientes').doc(email).update({ demoHasta: firebase.firestore.Timestamp.fromMillis(base + dias * 86400000), activo: true });
+    toast('Prueba extendida ' + dias + ' días'); cargarMisClientes();
+  } catch(e) { toast('Error: ' + e.message); }
+}
+function mostrarInactivo(motivo) {
   document.getElementById('loading').style.display = 'none';
+  if (motivo === 'demo') {
+    const t = document.getElementById('inactivoTitulo'), x = document.getElementById('inactivoTexto');
+    if (t) t.textContent = 'Terminó tu prueba gratis';
+    if (x) x.textContent = 'Tus 14 días de prueba terminaron. Tus datos están guardados y no se perdió nada. Activá tu cuenta para seguir usando CarneAR.';
+  }
   document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
   const sec = document.getElementById('sec-inactivo');
   if (sec) sec.style.display = 'flex';
@@ -2517,6 +2723,7 @@ async function cargarCliente(user) {
 
   // Admin siempre pasa sin restricciones
   if (esAdmin(email)) {
+    try { modoApp = (localStorage.getItem('tw_ver_como') === 'principiante') ? 'principiante' : 'avanzado'; } catch(_) { modoApp = 'avanzado'; }
     currentUser = user;
     userRole = 'dueno';
     currentSucursal = { id: 'principal', nombre: 'Principal' };
@@ -2540,25 +2747,45 @@ async function cargarCliente(user) {
         activo: true,
         features: PLANES.basico.features,
         limiteSucursales: 1,
+        demoHasta: firebase.firestore.Timestamp.fromMillis(Date.now() + RT_DEMO_DIAS * 86400000),
+        modo: 'principiante',
         creadoEn: firebase.firestore.FieldValue.serverTimestamp()
       };
-      await clienteRef.set(basicoData);
+      try { await clienteRef.set(basicoData); }
+      catch (e0) {
+        // Si las reglas todavía no admiten el campo "modo", se crea igual sin él (queda como Avanzado, como hasta ahora)
+        delete basicoData.modo;
+        await clienteRef.set(basicoData);
+      }
       clienteSnap = { data: () => basicoData, exists: true };
       console.log('Cliente nuevo creado con plan básico:', email);
     }
 
     const datos = clienteSnap.data();
     clienteActual = datos;
+    modoApp = (datos.modo === 'principiante') ? 'principiante' : 'avanzado';
 
     // Guardar/actualizar el uid en el registro de cliente (para el panel de actividad)
     if (datos.uid !== user.uid) {
       clienteRef.set({ uid: user.uid }, { merge: true }).catch(() => {});
     }
 
+    // Prueba gratis de 14 días: demoHasta = fecha de fin; null = cliente real (lo pasa el admin); sin campo = cuenta anterior, la prueba arranca hoy
+    let demoMs = (datos.demoHasta === undefined) ? undefined : (datos.demoHasta === null ? null : (datos.demoHasta.toMillis ? datos.demoHasta.toMillis() : null));
+    if (demoMs === undefined && datos.activo) {
+      const hasta = firebase.firestore.Timestamp.fromMillis(Date.now() + RT_DEMO_DIAS * 86400000);
+      try { await clienteRef.set({ demoHasta: hasta }, { merge: true }); demoMs = hasta.toMillis(); } catch(_) { demoMs = null; }
+    }
+
     // Verificar cuenta activa
     if (!datos.activo) {
       mostrarInactivo();
       return;
+    }
+    if (demoMs) {
+      const dias = Math.ceil((demoMs - Date.now()) / 86400000);
+      if (dias <= 0) { mostrarInactivo('demo'); return; }
+      mostrarCartelDemo(dias);
     }
 
     // Aplicar features del cliente (no del negocio)
@@ -2584,7 +2811,7 @@ async function cargarCliente(user) {
   }
 }
 
-// ══ GESTIÓN DE CLIENTES (solo admin - panel PIN 2580) ═════════
+// ══ GESTIÓN DE CLIENTES (solo admin - panel cuenta admin verificada) ═════════
 async function cargarMisClientes() {
   const lista = document.getElementById('misClientesList');
   if (!lista) return;
@@ -2597,6 +2824,11 @@ async function cargarMisClientes() {
     lista.innerHTML = snap.docs.map(d => {
       const cl = d.data();
       const planNom = PLANES[cl.plan]?.nombre || cl.plan;
+      const _dm = cl.demoHasta === null ? 'Cliente real' : (cl.demoHasta && cl.demoHasta.toMillis ? (Math.ceil((cl.demoHasta.toMillis() - Date.now()) / 86400000) > 0 ? 'Prueba: ' + Math.ceil((cl.demoHasta.toMillis() - Date.now()) / 86400000) + ' días' : 'Prueba vencida') : 'Sin prueba');
+      const _esP = cl.modo === 'principiante';
+      const modoBadge = _esP
+        ? '<span class="tw-modo-badge" style="background:rgba(37,99,235,.12);color:#2563eb">🌱 Principiante</span>'
+        : '<span class="tw-modo-badge" style="background:rgba(139,0,0,.12);color:#8B0000">🚀 Avanzado</span>';
       const estadoBadge = cl.activo
         ? '<span style="background:rgba(39,174,96,.12);color:#27ae60;font-size:10px;padding:2px 8px;border-radius:10px">● Activo</span>'
         : '<span style="background:rgba(239,68,68,.12);color:#ef4444;font-size:10px;padding:2px 8px;border-radius:10px">● Inactivo</span>';
@@ -2604,9 +2836,9 @@ async function cargarMisClientes() {
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
           <div>
             <div style="font-size:14px;font-weight:700;">${cl.nombre||cl.email}</div>
-            <div style="font-size:11px;color:var(--text2);">${cl.email}</div>
+            <div style="font-size:11px;color:var(--text2);">${cl.email} · ${_dm}</div>
           </div>
-          ${estadoBadge}
+          <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">${estadoBadge}${modoBadge}</div>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
           <select onchange="cambiarPlan('${d.id}',this.value)" style="flex:1;font-size:12px;padding:6px;">
@@ -2614,6 +2846,10 @@ async function cargarMisClientes() {
             <option value="pro"    ${cl.plan==='pro'?'selected':''}>Pro — 3 suc</option>
             <option value="full"   ${cl.plan==='full'?'selected':''}>Full — ilimitado</option>
           </select>
+          <button onclick="pasarACliente('${d.id}')" style="font-size:11px;padding:6px 10px;border-radius:10px;background:rgba(39,174,96,.1);color:#27ae60;border:1px solid rgba(39,174,96,.3)">✅ Pasar a cliente</button>
+          <button onclick="extenderDemo('${d.id}', 7)" style="font-size:11px;padding:6px 10px;border-radius:10px;background:rgba(37,99,235,.1);color:#2563eb;border:1px solid rgba(37,99,235,.3)">+7 días</button>
+          <button onclick="extenderDemo('${d.id}', 30)" style="font-size:11px;padding:6px 10px;border-radius:10px;background:rgba(37,99,235,.1);color:#2563eb;border:1px solid rgba(37,99,235,.3)">+30 días</button>
+          <button onclick="twCambiarModo('${d.id}', '${_esP ? 'avanzado' : 'principiante'}')" style="font-size:11px;padding:6px 10px;border-radius:10px;background:rgba(139,0,0,.08);color:#8B0000;border:1px solid rgba(139,0,0,.3)">${_esP ? '🚀 Pasar a Avanzado' : '🌱 Volver a Principiante'}</button>
           <button onclick="toggleCliente('${d.id}', ${!cl.activo})" style="font-size:11px;padding:6px 10px;border-radius:10px;${cl.activo?'background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.3);':'background:rgba(39,174,96,.1);color:#27ae60;border:1px solid rgba(39,174,96,.3);'} cursor:pointer;">${cl.activo?'🚫 Desactivar':'✅ Activar'}</button>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;padding:6px 2px;">
@@ -2711,7 +2947,7 @@ async function enviarResumenWA() {
 function setCajaMode(mode) {
   document.querySelectorAll('.caja-mode-content').forEach(d => d.classList.remove('active'));
   document.querySelectorAll('.caja-mode-btn').forEach(b => b.classList.remove('active'));
-  const ids = { catalogo: 'modeCatalogo', ticket: 'modeTicket' };
+  const ids = { catalogo: 'modeCatalogo', importe: 'modeImporte', ticket: 'modeTicket' };
   const el = document.getElementById(ids[mode]);
   if (el) el.classList.add('active');
   document.querySelectorAll('#cajaModeBar .caja-mode-btn').forEach(b => {
@@ -2723,6 +2959,218 @@ function actualizarBotonesModoCaja() {
   const btn = document.getElementById('modeTicketBtn');
   if (btn) btn.style.display = features.ticket ? '' : 'none';
 }
+
+async function registrarVentaRapida() {
+  const uid = getUserDoc();
+  if (!uid) return;
+  const ventasCol = col('ventas');
+  if (!ventasCol) { toast('Error: sin sesión activa'); return; }
+  const monto = parseFloat(document.getElementById('vrMonto')?.value) || 0;
+  if (monto <= 0) { toast('Ingresá un monto mayor a $0'); return; }
+  const desc = document.getElementById('vrDesc')?.value.trim() || 'Venta directa';
+  const metodo = document.getElementById('vrMetodo')?.value || 'efectivo';
+  const ahora = new Date();
+  const fechaDia = ahora.toISOString().slice(0,10);
+  try {
+    await col('ventas').add({
+      items: [{ nombre: desc, tamano: '', precio: monto, cantidad: 1 }],
+      total: monto, metodo, fechaDia,
+      fechaLocal: ahora.toISOString(),
+      uid, ventaRapida: true,
+      ts: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast('✅ $' + monto.toLocaleString('es-AR') + ' registrado');
+    const m = document.getElementById('vrMonto'); if(m) m.value = '';
+    const d = document.getElementById('vrDesc'); if(d) d.value = '';
+    if (esPrincipiante()) twActualizarHoy();
+  } catch(e) { logError('ventaRapida', e.message); toast('Error: ' + e.message); }
+}
+
+
+// ══════════ TRAINING WHEELS (v2.9-tw1) ══════════
+function twCerrarModal() { document.getElementById('twModal').style.display = 'none'; }
+function twAbrirModal(titulo, html) {
+  document.getElementById('twModalTitulo').textContent = titulo;
+  document.getElementById('twModalCuerpo').innerHTML = html;
+  const m = document.getElementById('twModal');
+  m.style.display = 'flex';
+  m.onclick = e => { if (e.target === m) twCerrarModal(); };
+}
+
+// Medio de pago con botones grandes (Principiante)
+document.addEventListener('click', e => {
+  const chip = e.target.closest && e.target.closest('#twMetodoChips .tw-chip');
+  if (!chip) return;
+  document.querySelectorAll('#twMetodoChips .tw-chip').forEach(c => c.classList.toggle('on', c === chip));
+  const sel = document.getElementById('vrMetodo');
+  if (sel) sel.value = chip.dataset.m;
+});
+
+// Total del día (Principiante)
+async function twActualizarHoy() {
+  try {
+    const ventas = await obtenerVentasHoy();
+    const total = ventas.reduce((s, v) => s + (v.total || 0), 0);
+    const el = document.getElementById('twHoyTotal');
+    if (el) el.textContent = '$' + total.toLocaleString('es-AR') + ' (' + ventas.length + (ventas.length === 1 ? ' venta)' : ' ventas)');
+  } catch (_) {}
+}
+
+// Ayuda de la primera vez (Principiante)
+function twMostrarAyudaInicial() {
+  const box = document.getElementById('twAyudaInicial');
+  if (!box) return;
+  let visto = false;
+  try { visto = localStorage.getItem('tw_ayuda_vista') === '1'; } catch (_) {}
+  if (visto) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="tw-hint">👋 <b>Así de simple:</b> escribí el importe, elegí cómo te pagaron y tocá <b>Cobrar</b>. En <b>Hoy</b> ves lo vendido y en <b>Más</b> el cierre de caja y la copia de seguridad.<br><button onclick="twCerrarAyuda()">Entendido</button></div>';
+}
+function twCerrarAyuda() {
+  try { localStorage.setItem('tw_ayuda_vista', '1'); } catch (_) {}
+  const box = document.getElementById('twAyudaInicial'); if (box) box.innerHTML = '';
+}
+
+// El cliente pide la versión completa → aviso por WhatsApp al admin (él la habilita con un botón)
+function twPedirCompleta() {
+  const mail = (currentUser && currentUser.email) ? currentUser.email : '';
+  const txt = 'Hola RavenTechs, quiero pasar a la versión completa de CarneAR. Mi cuenta: ' + mail;
+  window.open('https://wa.me/5491136547592?text=' + encodeURIComponent(txt), '_blank');
+}
+
+// Admin: pasar a un cliente de Principiante a Avanzado (y volver). No toca ningún dato del cliente.
+async function twCambiarModo(email, nuevo) {
+  if (nuevo !== 'avanzado' && nuevo !== 'principiante') return;
+  try {
+    await db.collection('clientes').doc(email).update({ modo: nuevo });
+    toast(nuevo === 'avanzado' ? '🚀 Pasó a Avanzado: lo verá al volver a abrir la app' : '🌱 Volvió a Principiante');
+    cargarMisClientes();
+  } catch (e) { logError('twCambiarModo', e.message); toast('Error: ' + e.message); }
+}
+
+// Admin: ver mi propia app como Principiante (solo en este teléfono)
+function twVerComo(modo) {
+  try { localStorage.setItem('tw_ver_como', modo === 'principiante' ? 'principiante' : 'avanzado'); } catch (_) {}
+  location.reload();
+}
+
+// ── Carga inicial guiada (Avanzado, catálogo vacío) ──
+function twChequearCargaInicial() {
+  try {
+    if (esPrincipiante() || userRole !== 'dueno' || enSucursal) return;
+    if (!clienteActual || clienteActual.modo !== 'avanzado') return; // solo quien pasó por Principiante
+    if (productos.length > 0) return;
+    if (localStorage.getItem('tw_setup_hecho') === '1') return;
+    twAbrirCargaInicial();
+  } catch (_) {}
+}
+function twAbrirCargaInicial() {
+  twAbrirModal('🥩 Armemos tu catálogo', `
+    <p style="font-size:0.88rem;color:var(--text2);line-height:1.5;margin-bottom:14px">Tu catálogo está vacío. En dos pasos queda listo para vender por kilos:</p>
+    <div class="config-group" style="margin:0 0 10px">
+      <b>Paso 1</b> — Cargá los cortes de carnicería ya armados (vacuna, cerdo, pollo, achuras, embutidos, bebidas y extras).
+      <button class="btn-save" style="width:100%;margin-top:10px" onclick="twCargarCatalogoRubro()">🥩 Cargar cortes de carnicería</button>
+    </div>
+    <div class="config-group" style="margin:0 0 10px">
+      <b>Paso 2</b> — Ajustá todos los precios de una vez a los tuyos (por ejemplo +10%).
+      <button class="btn-warning" style="width:100%;margin-top:10px" onclick="twAbrirAjustePrecios()">💲 Ajustar precios</button>
+    </div>
+    <button style="width:100%;padding:10px;border-radius:12px;border:1px solid var(--borde);background:var(--surface);color:var(--text2)" onclick="try{localStorage.setItem('tw_setup_hecho','1')}catch(_){};twCerrarModal()">Lo hago después</button>`);
+}
+// Solo agrega los cortes que faltan: NUNCA borra ni pisa productos existentes
+async function twCargarCatalogoRubro() {
+  const uid = getUserDoc(); if (!uid) return;
+  try {
+    const snap = await col('productos').get();
+    const existentes = new Set(snap.docs.map(d => String((d.data().nombre || '')).toLowerCase().trim()));
+    const faltan = CATALOGO_EJEMPLO.filter(p => !existentes.has(p.nombre.toLowerCase().trim()));
+    let batch = db.batch(), n = 0;
+    for (const p of faltan) {
+      batch.set(col('productos').doc(), { nombre: p.nombre, categoria: p.categoria, tamanos: p.tamanos, recetaPorTamano: {} });
+      if (++n % 400 === 0) { await batch.commit(); batch = db.batch(); }
+    }
+    await batch.commit();
+    toast(faltan.length ? '✅ ' + faltan.length + ' cortes cargados' : 'Ya tenías todos los cortes');
+    try { localStorage.setItem('tw_setup_hecho', '1'); } catch (_) {}
+  } catch (e) { logError('twCargarCatalogo', e.message); toast('Error: ' + e.message); }
+}
+
+// ── Ajuste de precios en bloque (con vista previa y deshacer) ──
+function twRedondear(n) { return n >= 1000 ? Math.round(n / 100) * 100 : Math.round(n / 10) * 10; }
+function twNuevoPrecio(precio, pct) { return Math.max(0, twRedondear(precio * (1 + pct / 100))); }
+function twAbrirAjustePrecios() {
+  const cats = [...new Set(productos.map(p => p.categoria).filter(Boolean))];
+  let undo = null; try { undo = JSON.parse(localStorage.getItem('tw_ultimo_ajuste') || 'null'); } catch (_) {}
+  twAbrirModal('💲 Ajustar precios', `
+    <p style="font-size:0.85rem;color:var(--text2);line-height:1.5;margin-bottom:12px">Subí o bajá los precios de todo el catálogo con un porcentaje. Antes de aplicar ves cómo queda.</p>
+    <label>Rubro / categoría</label>
+    <select id="twAjCat" style="margin-bottom:10px" onchange="twPreviewAjuste()">
+      <option value="">Todas</option>${cats.map(c => `<option value="${c.replace(/"/g,'&quot;')}">${c}</option>`).join('')}
+    </select>
+    <label>Porcentaje (+ sube, − baja)</label>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px">
+      ${[-10,5,10,20].map(v => `<button type="button" class="tw-chip" style="padding:10px 4px" onclick="document.getElementById('twAjPct').value=${v};twPreviewAjuste()">${v>0?'+':''}${v}%</button>`).join('')}
+    </div>
+    <input type="number" id="twAjPct" inputmode="decimal" step="0.5" placeholder="Otro %" style="margin-bottom:10px" oninput="twPreviewAjuste()">
+    <div id="twAjPrev" style="background:var(--bg2,rgba(0,0,0,.04));border-radius:12px;padding:10px 12px;font-size:0.82rem;margin-bottom:12px;min-height:40px;color:var(--text2)">Elegí un porcentaje para ver el resultado.</div>
+    <button class="btn-save" id="twAjAplicar" style="width:100%" onclick="twAplicarAjuste()" disabled>Aplicar ajuste</button>
+    ${undo && undo.items && undo.items.length ? `<button class="btn-warning" style="width:100%;margin-top:8px" onclick="twDeshacerAjuste()">↩ Deshacer el último ajuste (${undo.items.length} productos)</button>` : ''}`);
+}
+function twProductosAjuste() {
+  const cat = (document.getElementById('twAjCat') || {}).value || '';
+  return productos.filter(p => p.tamanos && p.tamanos.length && (!cat || p.categoria === cat));
+}
+function twPreviewAjuste() {
+  const pct = parseFloat((document.getElementById('twAjPct') || {}).value);
+  const prev = document.getElementById('twAjPrev'), btn = document.getElementById('twAjAplicar');
+  if (!prev || !btn) return;
+  const lista = twProductosAjuste();
+  if (isNaN(pct) || pct === 0 || pct <= -90 || pct > 500) { prev.textContent = 'Elegí un porcentaje para ver el resultado.'; btn.disabled = true; return; }
+  if (!lista.length) { prev.textContent = 'No hay productos en esa categoría.'; btn.disabled = true; return; }
+  const ej = lista.slice(0, 3).map(p => {
+    const t = p.tamanos[0];
+    return `<div>${p.nombre} (${t.nombre}): $${t.precio.toLocaleString('es-AR')} → <b>$${twNuevoPrecio(t.precio, pct).toLocaleString('es-AR')}</b></div>`;
+  }).join('');
+  prev.innerHTML = `Se modifican <b>${lista.length}</b> productos (${pct > 0 ? '+' : ''}${pct}%):${ej}`;
+  btn.disabled = false;
+}
+async function twAplicarAjuste() {
+  const pct = parseFloat(document.getElementById('twAjPct').value);
+  if (isNaN(pct) || pct === 0 || pct <= -90 || pct > 500) return;
+  const lista = twProductosAjuste(); if (!lista.length) return;
+  if (!confirm('¿Aplicar ' + (pct > 0 ? '+' : '') + pct + '% a ' + lista.length + ' productos? Después podés deshacerlo.')) return;
+  try {
+    const undo = { fecha: Date.now(), items: lista.map(p => ({ id: p.id, tamanos: p.tamanos })) };
+    try { localStorage.setItem('tw_ultimo_ajuste', JSON.stringify(undo)); } catch (_) {}
+    let batch = db.batch(), n = 0;
+    for (const p of lista) {
+      const tam = p.tamanos.map(t => ({ nombre: t.nombre, precio: twNuevoPrecio(t.precio, pct) }));
+      batch.update(col('productos').doc(p.id), { tamanos: tam });
+      if (++n % 400 === 0) { await batch.commit(); batch = db.batch(); }
+    }
+    await batch.commit();
+    try { localStorage.setItem('tw_setup_hecho', '1'); } catch (_) {}
+    toast('✅ Precios ajustados (' + lista.length + ' productos)');
+    twCerrarModal();
+  } catch (e) { logError('twAplicarAjuste', e.message); toast('Error: ' + e.message); }
+}
+async function twDeshacerAjuste() {
+  let undo = null; try { undo = JSON.parse(localStorage.getItem('tw_ultimo_ajuste') || 'null'); } catch (_) {}
+  if (!undo || !undo.items || !undo.items.length) return toast('No hay nada para deshacer');
+  if (!confirm('¿Volver los precios a como estaban antes del último ajuste?')) return;
+  try {
+    let batch = db.batch(), n = 0;
+    for (const it of undo.items) {
+      if (!productos.some(p => p.id === it.id)) continue; // si el producto ya no existe, se omite
+      batch.update(col('productos').doc(it.id), { tamanos: it.tamanos });
+      if (++n % 400 === 0) { await batch.commit(); batch = db.batch(); }
+    }
+    await batch.commit();
+    try { localStorage.removeItem('tw_ultimo_ajuste'); } catch (_) {}
+    toast('↩ Precios restaurados');
+    twCerrarModal();
+  } catch (e) { logError('twDeshacerAjuste', e.message); toast('Error: ' + e.message); }
+}
+// ══════════ FIN TRAINING WHEELS ══════════
 
 // ══ FEATURES PANEL (modal flotante) ══════════════════════════
 function showFeaturesPanel() {
@@ -2743,6 +3191,10 @@ function showFeaturesPanel() {
       ${makeToggle('proveedores','🏭','Proveedores')}
       ${makeToggle('ticket','📸','Escáner de tickets')}
       ${currentUser?.email === ADMIN_EMAIL ? `
+      <div style="margin-top:14px;border-top:1px solid var(--borde);padding-top:14px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">🎓 Training Wheels</div>
+        <button onclick="twVerComo('${esPrincipiante() ? 'avanzado' : 'principiante'}')" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--borde);background:var(--surface);color:var(--text);font-weight:700;cursor:pointer">${esPrincipiante() ? '🚀 Volver a ver mi app como Avanzado' : '🌱 Ver mi app como Principiante'}</button>
+      </div>
       <div style="margin-top:14px;border-top:1px solid var(--borde);padding-top:14px;">
         <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">👥 Mis clientes</div>
         <div id="misClientesList"><p style="font-size:13px;color:var(--text2);text-align:center">Cargando...</p></div>
@@ -3008,10 +3460,21 @@ function copiarLink(url) {
 
   // SERVICE WORKER — P3 ROBUSTEZ
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw-carnear.js')
+    navigator.serviceWorker.register('sw-carnear.js')
       .catch(e => logError('sw', e));
   }
 </script>
+
+  <!-- TRAINING WHEELS: carga inicial y ajuste de precios -->
+  <div id="twModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:700;align-items:flex-end;justify-content:center;">
+    <div style="background:var(--surface);border-radius:20px 20px 0 0;padding:18px 20px 28px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h3 id="twModalTitulo" style="margin:0"></h3>
+        <button class="btn-cerrar-modal" onclick="twCerrarModal()">✕</button>
+      </div>
+      <div id="twModalCuerpo"></div>
+    </div>
+  </div>
 
   <!-- MODAL RAVENTECHS -->
   <div id="modalRaven" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:600;align-items:flex-end;justify-content:center;">
