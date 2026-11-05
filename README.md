@@ -14,4 +14,9 @@ Una sola app con dos modos, solo por habilitación:
 ## Reglas Firestore
 Ver `qa/rules/carnear-fase3.rules` en el repo `gasar`: agrega `modo` (solo `principiante`) a la alta del cliente. Si todavía no están publicadas, la app crea la cuenta sin `modo` y queda como Avanzado.
 
-Versión: v2.9-tw1 = producción v2.7 + venta por kilos (beta v2.8) + Training Wheels.
+## v2.9-tw2 — cómo el cliente descubre la versión completa (sin asustarse)
+- Aviso suave en Cobrar tras 10 ventas o 7 días de uso (se pospone 7 días con "Ahora no").
+- En Más: lista con candados (catálogo y kilos, stock, gastos y proveedores, varias sucursales); cada una con "Quiero esto" que avisa por WhatsApp con el tema.
+- Panel admin: por cada cliente Principiante, ventas y días de uso, con aviso "momento de ofrecerle la completa".
+
+Versión: v2.9-tw2 = producción v2.7 + venta por kilos (beta v2.8) + Training Wheels.

@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <!--
   ════════════════════════════════════════════════════════════
-  CARNEAR — CAJA REGISTRADORA PARA CARNICERÍAS — v2.9-tw1 (beta Training Wheels)
+  CARNEAR — CAJA REGISTRADORA PARA CARNICERÍAS — v2.9-tw2 (beta Training Wheels)
   Fecha de esta versión: 25/10/2026
+  v2.9-tw2: AVISOS SUAVES (tarjeta chica en Cobrar tras 10 ventas o 7 días, se puede posponer) + LISTA CON CANDADOS en Más (qué trae la
+  versión completa, cada una con botón "Quiero esto" que avisa por WhatsApp) + USO POR CLIENTE en el panel admin (ventas y días, aviso de momento de venta).
   v2.9-tw1: TRAINING WHEELS. La misma app con dos modos: PRINCIPIANTE (cobrar un importe + medio de pago, historial de hoy,
   sin catálogo ni stock) y AVANZADO (todo lo anterior). El cliente nuevo entra como Principiante; el admin lo pasa a Avanzado
   con un botón (menú oculto → Mis clientes). Cuentas anteriores (sin campo "modo") siguen como Avanzado, sin cambios.
@@ -308,6 +310,15 @@
     .tw-hoy b{font-size:1.15rem;color:var(--accent)}
     .tw-hint{background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.25);border-radius:14px;padding:12px 14px;margin:12px;font-size:0.85rem;line-height:1.5;color:var(--text)}
     .tw-hint button{margin-top:8px;padding:6px 12px;border-radius:10px;border:1px solid var(--borde);background:var(--surface);color:var(--text2);font-size:0.8rem;cursor:pointer}
+    .tw-lock{display:flex;align-items:center;gap:10px;padding:10px 4px;border-top:1px solid var(--borde);cursor:pointer}
+    .tw-lock>span{font-size:1.2rem}
+    .tw-lock>div{flex:1;line-height:1.3}
+    .tw-lock small{display:block;color:var(--text2);font-size:0.78rem}
+    .tw-lock i{font-style:normal;font-size:0.75rem;font-weight:700;color:var(--accent);white-space:nowrap}
+    .tw-aviso{background:rgba(139,0,0,.06);border:1px solid rgba(139,0,0,.25);border-radius:14px;padding:12px 14px;margin:0 12px 12px;font-size:0.85rem;line-height:1.45}
+    .tw-aviso .fila{display:flex;gap:8px;margin-top:8px}
+    .tw-aviso button{padding:8px 12px;border-radius:10px;border:1px solid var(--borde);background:var(--surface);color:var(--text2);font-size:0.8rem;cursor:pointer}
+    .tw-aviso button.si{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
     .tw-modo-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700}
   </style>
 <script>
@@ -641,6 +652,7 @@ var __rtPWA = (function() {
     </div>
 
     <div class="tw-hoy tw-only-simple" id="twHoy"><span>Hoy llevás</span><b id="twHoyTotal">$0</b></div>
+    <div class="tw-only-simple" id="twAviso"></div>
     <!-- CIERRE DE CAJA -->
     <div class="config-group" style="margin:12px;">
       <h3>🔒 Cierre de caja</h3>
@@ -716,8 +728,12 @@ var __rtPWA = (function() {
     <h2>⚙️ Configuración</h2>
     <div class="config-group tw-only-simple" id="twVersionCompleta">
       <h3>🚀 Versión completa</h3>
-      <p style="font-size:0.82rem;color:var(--text2);margin-bottom:10px;line-height:1.5">Cuando quieras más: catálogo de cortes, venta por kilos, stock, gastos, proveedores y varias sucursales. Tus ventas de hoy se mantienen. Te avisamos por WhatsApp y te la habilitamos.</p>
-      <button class="btn-save" style="width:100%" onclick="twPedirCompleta()">🚀 Quiero la versión completa</button>
+      <p style="font-size:0.82rem;color:var(--text2);margin-bottom:10px;line-height:1.5">Cuando quieras más, te la habilitamos. Tus ventas se mantienen y no hay que cargar nada de nuevo.</p>
+      <div class="tw-lock" onclick="twPedirCompleta('catálogo de cortes y venta por kilos')"><span>🔒</span><div><b>Catálogo y venta por kilos</b><small>Tus cortes con precio por kilo: pesás y la app calcula el importe.</small></div><i>Quiero esto</i></div>
+      <div class="tw-lock" onclick="twPedirCompleta('control de stock')"><span>🔒</span><div><b>Stock</b><small>Sabé cuánta mercadería te queda y recibí aviso cuando se acaba.</small></div><i>Quiero esto</i></div>
+      <div class="tw-lock" onclick="twPedirCompleta('gastos y proveedores')"><span>🔒</span><div><b>Gastos y proveedores</b><small>Anotá lo que gastás y a quién le comprás: ves tu ganancia real.</small></div><i>Quiero esto</i></div>
+      <div class="tw-lock" onclick="twPedirCompleta('varias sucursales')"><span>🔒</span><div><b>Varias sucursales</b><small>Cada local con su caja, y vos ves todo junto desde el celular.</small></div><i>Quiero esto</i></div>
+      <button class="btn-save" style="width:100%;margin-top:6px" onclick="twPedirCompleta('')">🚀 Quiero la versión completa</button>
     </div>
     <div class="config-group tw-adv">
       <h3>Catálogo</h3>
@@ -1467,7 +1483,7 @@ function switchTab(id) {
   if(sec) sec.classList.add('active');
   document.querySelectorAll(`[data-tab="${id}"]`).forEach(b => b.classList.add('active'));
   if(id==='caja') {
-    if (esPrincipiante()) { setCajaMode('importe'); twActualizarHoy(); twMostrarAyudaInicial(); }
+    if (esPrincipiante()) { setCajaMode('importe'); twActualizarHoy(); twMostrarAyudaInicial(); twMostrarAviso(); }
     else { renderPOS(); actualizarBotonesModoCaja(); setCajaMode('catalogo'); }
   }
   if(id==='historial') loadHistorial('hoy');
@@ -2840,6 +2856,7 @@ async function cargarMisClientes() {
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">${estadoBadge}${modoBadge}</div>
         </div>
+        ${_esP ? `<div style="font-size:11px;color:var(--text2);margin:-2px 0 8px" data-uso-uid="${cl.uid || ''}" data-uso-dias="${(cl.creadoEn && cl.creadoEn.toMillis) ? Math.floor((Date.now() - cl.creadoEn.toMillis()) / 86400000) : 0}">Cargando uso…</div>` : ''}
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
           <select onchange="cambiarPlan('${d.id}',this.value)" style="flex:1;font-size:12px;padding:6px;">
             <option value="basico" ${cl.plan==='basico'?'selected':''}>Básico — 1 suc</option>
@@ -2862,6 +2879,7 @@ async function cargarMisClientes() {
         </div>
       </div>`;
     }).join('');
+    twCargarUsoClientes();
   } catch(e) { logError('cargarMisClientes', e.message); }
 }
 
@@ -3030,11 +3048,51 @@ function twCerrarAyuda() {
   const box = document.getElementById('twAyudaInicial'); if (box) box.innerHTML = '';
 }
 
-// El cliente pide la versión completa → aviso por WhatsApp al admin (él la habilita con un botón)
-function twPedirCompleta() {
+// El cliente pide la versión completa (o una función puntual) → aviso por WhatsApp al admin (él la habilita con un botón)
+function twPedirCompleta(tema) {
   const mail = (currentUser && currentUser.email) ? currentUser.email : '';
-  const txt = 'Hola RavenTechs, quiero pasar a la versión completa de CarneAR. Mi cuenta: ' + mail;
+  const txt = 'Hola RavenTechs, quiero pasar a la versión completa de CarneAR' + (tema ? ' (me interesa: ' + tema + ')' : '') + '. Mi cuenta: ' + mail;
   window.open('https://wa.me/5491136547592?text=' + encodeURIComponent(txt), '_blank');
+}
+
+// Aviso suave en Cobrar: tras 10 ventas o 7 días de uso; se puede posponer 7 días. Un solo aviso a la vez.
+async function twMostrarAviso() {
+  const box = document.getElementById('twAviso');
+  if (!box) return;
+  box.innerHTML = '';
+  try {
+    const hasta = parseInt(localStorage.getItem('tw_aviso_hasta') || '0', 10);
+    if (hasta && Date.now() < hasta) return;
+    let n = 0;
+    try { const s = await col('ventas').limit(10).get(); n = s.size; } catch (_) {}
+    let dias = 0;
+    try { const c = clienteActual && clienteActual.creadoEn; if (c && c.toMillis) dias = Math.floor((Date.now() - c.toMillis()) / 86400000); } catch (_) {}
+    if (n < 10 && dias < 7) return;
+    const txt = n >= 10
+      ? 'Ya cobraste varias ventas con CarneAR. 👏 ¿Querés ver qué cortes se venden más y cuánto stock te queda? La versión completa lo hace sola, sin que cargues todo de nuevo.'
+      : 'Ya llevás una semana usando CarneAR. 👏 Cuando quieras, la versión completa suma catálogo, kilos y stock. Sin apuro, tus ventas se mantienen.';
+    box.innerHTML = '<div class="tw-aviso">' + txt + '<div class="fila"><button class="si" onclick="twPedirCompleta(\'\')">Quiero verla</button><button onclick="twPosponerAviso()">Ahora no</button></div></div>';
+  } catch (_) {}
+}
+function twPosponerAviso() {
+  try { localStorage.setItem('tw_aviso_hasta', String(Date.now() + 7 * 86400000)); } catch (_) {}
+  const box = document.getElementById('twAviso'); if (box) box.innerHTML = '';
+}
+
+// Admin: uso de cada cliente Principiante (ventas y días). Si ya pasó de 10 ventas o 7 días → "momento de ofrecer la completa"
+async function twCargarUsoClientes() {
+  const els = document.querySelectorAll('[data-uso-uid]');
+  for (const el of els) {
+    const uid = el.getAttribute('data-uso-uid');
+    const dias = parseInt(el.getAttribute('data-uso-dias') || '0', 10);
+    if (!uid) { el.textContent = 'Todavía no entró con su cuenta'; continue; }
+    try {
+      const s = await db.collection('negocios').doc(uid).collection('ventas').limit(30).get();
+      const n = s.size;
+      const caliente = n >= 10 || dias >= 7;
+      el.innerHTML = '📊 ' + (n >= 30 ? '30+' : n) + ' ventas · ' + dias + ' días' + (caliente ? ' · <b style="color:#8B0000">💡 momento de ofrecerle la completa</b>' : '');
+    } catch (e) { el.textContent = ''; }
+  }
 }
 
 // Admin: pasar a un cliente de Principiante a Avanzado (y volver). No toca ningún dato del cliente.
