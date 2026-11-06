@@ -735,6 +735,10 @@ var __rtPWA = (function() {
       <div class="tw-lock" onclick="twPedirCompleta('varias sucursales')"><span>🔒</span><div><b>Varias sucursales</b><small>Cada local con su caja, y vos ves todo junto desde el celular.</small></div><i>Quiero esto</i></div>
       <button class="btn-save" style="width:100%;margin-top:6px" onclick="twPedirCompleta('')">🚀 Quiero la versión completa</button>
     </div>
+    <div class="config-group" id="twAdminVer" style="display:none">
+      <h3>🎓 Ver mi app como…</h3>
+      <div id="twAdminVerCuerpo"></div>
+    </div>
     <div class="config-group tw-adv">
       <h3>Catálogo</h3>
       <button class="btn-warning" id="configResetBtn">🔄 Restablecer catálogo de ejemplo</button>
@@ -1072,6 +1076,10 @@ let logoTaps = 0;
 // Training Wheels: 'principiante' | 'avanzado'. Sin campo en la cuenta = avanzado (cuentas anteriores no cambian).
 let modoApp = 'avanzado';
 function esPrincipiante() { return modoApp === 'principiante' && userRole === 'dueno'; }
+// Vista del admin (solo en su teléfono): 'sucursales' (completo con panel de sucursales, lo de siempre) | 'comun' (completo de un solo local) | 'principiante'
+let twForzarUna = false;
+function twVistaAdmin() { try { const v = localStorage.getItem('tw_ver_como'); return (v === 'principiante' || v === 'comun') ? v : 'sucursales'; } catch (_) { return 'sucursales'; } }
+function twLim(n) { return twForzarUna ? 1 : n; }
 function aplicarModoVisual() { document.body.classList.toggle('tw-simple', esPrincipiante()); }
 let logoTimer = null;
 let editingProductId = null;
@@ -1440,6 +1448,7 @@ function initApp() {
   document.getElementById('app').style.display = 'block';
   document.getElementById('mobNav').classList.remove('hidden');
   aplicarModoVisual();
+  twMostrarSelectorAdmin();
   renderTabs(getTabsForRole());
   if (userRole === 'dueno' && limiteSucursales > 1 && !esPrincipiante()) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -1500,7 +1509,7 @@ function switchTab(id) {
       db.collection('negocios').doc(uid2).get()
         .then(doc => {
           if (doc.exists) {
-            if (doc.data().limiteSucursales) limiteSucursales = doc.data().limiteSucursales;
+            if (doc.data().limiteSucursales) limiteSucursales = twLim(doc.data().limiteSucursales);
           }
           renderSucursalesConfig();
         }).catch(() => renderSucursalesConfig());
@@ -1558,8 +1567,8 @@ function subscribeData() {
       }
     }
     const prevLimite = limiteSucursales;
-    limiteSucursales = datos.limiteSucursales || 1;
-    localStorage.setItem('carnear_ls', limiteSucursales);
+    limiteSucursales = twLim(datos.limiteSucursales || 1);
+    if (!twForzarUna) localStorage.setItem('carnear_ls', limiteSucursales);
     if (limiteSucursales !== prevLimite && limiteSucursales > 1) {
       db.collection('negocios').doc(uid).collection('sucursales').get()
         .then(snap => {
@@ -2592,8 +2601,8 @@ async function verificarMultiSucursal() {
     const neg = await db.collection('negocios').doc(uid).get();
     if (neg.exists) {
       const d = neg.data();
-      limiteSucursales = d.limiteSucursales || 1;
-      localStorage.setItem('carnear_ls', limiteSucursales);
+      limiteSucursales = twLim(d.limiteSucursales || 1);
+      if (!twForzarUna) localStorage.setItem('carnear_ls', limiteSucursales);
       if (d.features) { features = Object.assign(features, d.features); renderTabs(getTabsForRole()); }
     }
     if (limiteSucursales > 1) {
@@ -2739,7 +2748,7 @@ async function cargarCliente(user) {
 
   // Admin siempre pasa sin restricciones
   if (esAdmin(email)) {
-    try { modoApp = (localStorage.getItem('tw_ver_como') === 'principiante') ? 'principiante' : 'avanzado'; } catch(_) { modoApp = 'avanzado'; }
+    { const _v = twVistaAdmin(); modoApp = (_v === 'principiante') ? 'principiante' : 'avanzado'; twForzarUna = (_v === 'comun' || _v === 'principiante'); if (twForzarUna) limiteSucursales = 1; }
     currentUser = user;
     userRole = 'dueno';
     currentSucursal = { id: 'principal', nombre: 'Principal' };
@@ -3107,10 +3116,22 @@ async function twCambiarModo(email, nuevo) {
   } catch (e) { logError('twCambiarModo', e.message); toast('Error: ' + e.message); }
 }
 
-// Admin: ver mi propia app como Principiante (solo en este teléfono)
-function twVerComo(modo) {
-  try { localStorage.setItem('tw_ver_como', modo === 'principiante' ? 'principiante' : 'avanzado'); } catch (_) {}
+// Admin: elegir cómo ver mi propia app (solo en este teléfono). Se recarga para arrancar limpio en esa vista.
+function twVerComo(v) {
+  if (v !== 'principiante' && v !== 'comun' && v !== 'sucursales') v = 'sucursales';
+  try { localStorage.setItem('tw_ver_como', v); } catch (_) {}
   location.reload();
+}
+function twVistaHtml() {
+  const act = twVistaAdmin();
+  const op = [['sucursales', '🏬 Completo con sucursales', 'Panel con tus 3 locales'], ['comun', '🥩 Completo común', 'Como lo ve un cliente de un solo local'], ['principiante', '🌱 Principiante', 'Solo cobrar, Hoy y Más']];
+  return op.map(o => '<button type="button" onclick="twVerComo(\'' + o[0] + '\')" style="width:100%;text-align:left;padding:10px 12px;margin-bottom:8px;border-radius:12px;border:2px solid ' + (act === o[0] ? 'var(--accent)' : 'var(--borde)') + ';background:' + (act === o[0] ? 'rgba(139,0,0,.08)' : 'var(--surface)') + ';color:var(--text);cursor:pointer"><b>' + (act === o[0] ? '✔ ' : '') + o[1] + '</b><br><small style="color:var(--text2)">' + o[2] + '</small></button>').join('');
+}
+function twMostrarSelectorAdmin() {
+  const g = document.getElementById('twAdminVer'); if (!g) return;
+  const ok = !!(currentUser && esAdmin(currentUser.email));
+  g.style.display = ok ? 'block' : 'none';
+  if (ok) document.getElementById('twAdminVerCuerpo').innerHTML = twVistaHtml();
 }
 
 // ── Carga inicial guiada (Avanzado, catálogo vacío) ──
@@ -3253,7 +3274,7 @@ function showFeaturesPanel() {
       ${currentUser?.email === ADMIN_EMAIL ? `
       <div style="margin-top:14px;border-top:1px solid var(--borde);padding-top:14px;">
         <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">🎓 Training Wheels</div>
-        <button onclick="twVerComo('${esPrincipiante() ? 'avanzado' : 'principiante'}')" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--borde);background:var(--surface);color:var(--text);font-weight:700;cursor:pointer">${esPrincipiante() ? '🚀 Volver a ver mi app como Avanzado' : '🌱 Ver mi app como Principiante'}</button>
+        ${twVistaHtml()}
       </div>
       <div style="margin-top:14px;border-top:1px solid var(--borde);padding-top:14px;">
         <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">👥 Mis clientes</div>

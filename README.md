@@ -9,7 +9,7 @@ Una sola app con dos modos, solo por habilitación:
 - Campo `modo` en `clientes/{email}` (`principiante` | `avanzado`). Sin campo = Avanzado (cuentas anteriores no cambian).
 - El cliente nuevo se crea como `principiante`. Solo el admin cambia el modo (menú oculto → Mis clientes → botón).
 - Las ventas y datos son los mismos en ambos modos: pasar de uno a otro no migra ni borra nada.
-- Admin: menú oculto → "Ver mi app como Principiante" (solo en su teléfono).
+- Admin: en Config (arriba) hay "Ver mi app como…" con 3 vistas, solo en su teléfono y solo con su cuenta: Completo con sucursales (panel de sus locales), Completo común (un solo local, como lo ve un cliente) y Principiante. También está en el menú oculto (5 toques al logo).
 
 ## Reglas Firestore
 Ver `qa/rules/carnear-fase3.rules` en el repo `gasar`: agrega `modo` (solo `principiante`) a la alta del cliente. Si todavía no están publicadas, la app crea la cuenta sin `modo` y queda como Avanzado.
