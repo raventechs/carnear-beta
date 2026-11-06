@@ -1160,10 +1160,10 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (user && user.isAnonymous && _codigoLink) {
         iniciarCajeroLink(_codigoLink);
       } else if (user && user.isAnonymous && !_codigoLink) {
-        currentUser = user;
-        userRole = 'cajero';
-        currentSucursal = { id: 'principal', nombre: 'Principal' };
-        initApp();
+        appRunning = false;
+        try { auth.signOut(); } catch(_) {}
+        showLogin();
+        showError('Tu sesión de caja venció. Ingresá con tu cuenta de Google para seguir.');
       } else {
         appRunning = false;
         showLogin();
