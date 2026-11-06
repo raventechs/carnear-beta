@@ -303,10 +303,10 @@
     body.tw-simple .tw-chips.tw-only-simple{display:grid}
     body.tw-simple .tw-hoy.tw-only-simple{display:flex}
     body.tw-simple .tw-adv{display:none !important}
-    .tw-chips{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+    .tw-chips{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
     .tw-chip{padding:14px 8px;border-radius:14px;border:2px solid var(--borde);background:var(--surface);color:var(--text);font-size:0.95rem;font-weight:700;cursor:pointer}
     .tw-chip.on{border-color:var(--accent);background:var(--accent);color:#fff}
-    .tw-hoy{display:flex;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--borde);border-radius:14px;padding:12px 14px;margin:0 12px 12px}
+    .tw-hoy{justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--borde);border-radius:14px;padding:12px 14px;margin:0 12px 12px}
     .tw-hoy b{font-size:1.15rem;color:var(--accent)}
     .tw-hint{background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.25);border-radius:14px;padding:12px 14px;margin:12px;font-size:0.85rem;line-height:1.5;color:var(--text)}
     .tw-hint button{margin-top:8px;padding:6px 12px;border-radius:10px;border:1px solid var(--borde);background:var(--surface);color:var(--text2);font-size:0.8rem;cursor:pointer}
@@ -598,8 +598,8 @@ var __rtPWA = (function() {
     <!-- MODE BAR CAJA -->
     <div id="twAyudaInicial"></div>
     <div class="caja-mode-bar tw-adv" id="cajaModeBar">
-      <button class="caja-mode-btn active" onclick="setCajaMode('catalogo')">🥩 Catálogo</button>
-      <button class="caja-mode-btn" onclick="setCajaMode('importe')">💰 Importe</button>
+      <button class="caja-mode-btn active" onclick="setCajaMode('importe')">💰 Importe</button>
+      <button class="caja-mode-btn" onclick="setCajaMode('catalogo')">🥩 Catálogo</button>
       <button class="caja-mode-btn" id="modeTicketBtn" onclick="setCajaMode('ticket')" style="display:none">📸 Ticket</button>
     </div>
     <div class="caja-mode-content active tw-adv" id="modeCatalogo">
@@ -1484,7 +1484,7 @@ function switchTab(id) {
   document.querySelectorAll(`[data-tab="${id}"]`).forEach(b => b.classList.add('active'));
   if(id==='caja') {
     if (esPrincipiante()) { setCajaMode('importe'); twActualizarHoy(); twMostrarAyudaInicial(); twMostrarAviso(); }
-    else { renderPOS(); actualizarBotonesModoCaja(); setCajaMode('catalogo'); }
+    else { renderPOS(); actualizarBotonesModoCaja(); setCajaMode('importe'); }
   }
   if(id==='historial') loadHistorial('hoy');
   if(id==='inicio') {
@@ -2968,6 +2968,7 @@ function setCajaMode(mode) {
   const ids = { catalogo: 'modeCatalogo', importe: 'modeImporte', ticket: 'modeTicket' };
   const el = document.getElementById(ids[mode]);
   if (el) el.classList.add('active');
+  const _cart = document.getElementById('cartArea'); if (_cart) _cart.style.display = (mode === 'importe') ? 'none' : '';
   document.querySelectorAll('#cajaModeBar .caja-mode-btn').forEach(b => {
     if (b.getAttribute('onclick')?.includes("'" + mode + "'")) b.classList.add('active');
   });
@@ -3099,6 +3100,7 @@ async function twCargarUsoClientes() {
 async function twCambiarModo(email, nuevo) {
   if (nuevo !== 'avanzado' && nuevo !== 'principiante') return;
   try {
+    // Solo cambia el modo. Los extras (ticket con IA, gastos, proveedores, sucursales) se activan aparte, por cliente. No toca datos.
     await db.collection('clientes').doc(email).update({ modo: nuevo });
     toast(nuevo === 'avanzado' ? '🚀 Pasó a Avanzado: lo verá al volver a abrir la app' : '🌱 Volvió a Principiante');
     cargarMisClientes();
