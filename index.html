@@ -3156,9 +3156,12 @@ async function twGuardarNegocio(quitar) {
   const nombre = quitar ? '' : twLimpiarNombre((document.getElementById('twNegInput') || {}).value);
   if (!quitar && !nombre) return toast('Escribí el nombre del negocio');
   try {
-    await db.collection('clientes').doc(email).update({ negocio: nombre });
+    const _propio = currentUser && esAdmin(currentUser.email) && email === currentUser.email;
+    if (_propio) await db.collection('clientes').doc(email).set({ email, negocio: nombre }, { merge: true });
+    else await db.collection('clientes').doc(email).update({ negocio: nombre });
+    if (_propio) { negocioNombre = nombre; twPintarTitulo(enSucursal && currentSucursal ? currentSucursal.nombre : ''); twMostrarSelectorAdmin(); }
     toast(nombre ? '🏷️ Nombre guardado' : 'Nombre quitado');
-    twCerrarModal(); cargarMisClientes();
+    twCerrarModal(); if (document.getElementById('misClientesList')) cargarMisClientes();
   } catch (e) { logError('twGuardarNegocio', e.message); toast('Error: ' + e.message); }
 }
 
@@ -3187,7 +3190,8 @@ function twMostrarSelectorAdmin() {
   const g = document.getElementById('twAdminVer'); if (!g) return;
   const ok = !!(currentUser && esAdmin(currentUser.email));
   g.style.display = ok ? 'block' : 'none';
-  if (ok) document.getElementById('twAdminVerCuerpo').innerHTML = twVistaHtml();
+  if (ok) document.getElementById('twAdminVerCuerpo').innerHTML = twVistaHtml()
+    + '<button type="button" onclick="twEditarNegocio(\'' + currentUser.email + '\')" style="width:100%;text-align:left;padding:10px 12px;margin-bottom:8px;border-radius:12px;border:2px solid var(--borde);background:var(--surface);color:var(--text)"><b>🏷️ Mi nombre de negocio</b><br><span style="font-size:12px;color:var(--text2)">' + (negocioNombre ? twLimpiarNombre(negocioNombre) : 'Sin nombre: se ve solo CarneAR') + '</span></button>';
 }
 
 // ── Carga inicial guiada (Avanzado, catálogo vacío) ──
