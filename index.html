@@ -1486,6 +1486,7 @@ function renderTabs(tabs) {
 }
 
 function switchTab(id) {
+  if (esPrincipiante() && id !== 'caja' && id !== 'historial' && id !== 'config') id = 'caja';
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.tabs button, .mob-nav button').forEach(b => b.classList.remove('active'));
   const sec = document.getElementById('sec-'+id);
@@ -2614,6 +2615,7 @@ async function verificarMultiSucursal() {
 }
 
 function mostrarDashboard() {
+  if (esPrincipiante() || twForzarUna) return;   // vistas simples del admin: nunca el panel de sucursales
   _dashUnsubs.forEach(u => u && u()); _dashUnsubs.length = 0;
   const grid = document.getElementById('sucGrid');
   if (!grid) return;
@@ -2656,6 +2658,7 @@ function mostrarDashboard() {
 }
 
 function entrarEnSucursal(suc) {
+  if (esPrincipiante()) return;
   _dashUnsubs.forEach(u => u && u()); _dashUnsubs.length = 0;
   enSucursal = true;
   currentSucursal = suc;
