@@ -20,3 +20,9 @@ Ver `qa/rules/carnear-fase3.rules` en el repo `gasar`: agrega `modo` (solo `prin
 - Panel admin: por cada cliente Principiante, ventas y días de uso, con aviso "momento de ofrecerle la completa".
 
 Versión: v2.9-tw2 = producción v2.7 + venta por kilos (beta v2.8) + Training Wheels.
+
+---
+## Cambio de roles (7/11/2026)
+- La versión con Training Wheels (v2.9) pasó a **producción** (repo `carnear`, carnear.raventechsapp.com).
+- Esta beta quedó con la versión **anterior (v2.7)** para consulta y pruebas. El historial de este repo conserva la v2.9-tw4 (commit ebd0bda).
+- Respaldo de producción anterior: tag `v2.7-respaldo` en el repo `carnear`.
