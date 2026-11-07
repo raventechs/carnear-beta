@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <!--
   ════════════════════════════════════════════════════════════
-  CARNEAR — CAJA REGISTRADORA PARA CARNICERÍAS — v2.9-tw2 (beta Training Wheels)
+  CARNEAR — CAJA REGISTRADORA PARA CARNICERÍAS — v2.9-tw3 (beta Training Wheels)
   Fecha de esta versión: 25/10/2026
+  v2.9-tw3: NOMBRE DEL NEGOCIO. CarneAR queda como marca (chica, debajo) y arriba va el nombre del comercio, que carga el admin desde el menú oculto → Mis clientes → "Nombre".
   v2.9-tw2: AVISOS SUAVES (tarjeta chica en Cobrar tras 10 ventas o 7 días, se puede posponer) + LISTA CON CANDADOS en Más (qué trae la
   versión completa, cada una con botón "Quiero esto" que avisa por WhatsApp) + USO POR CLIENTE en el panel admin (ventas y días, aviso de momento de venta).
   v2.9-tw1: TRAINING WHEELS. La misma app con dos modos: PRINCIPIANTE (cobrar un importe + medio de pago, historial de hoy,
@@ -319,6 +320,10 @@
     .tw-aviso .fila{display:flex;gap:8px;margin-top:8px}
     .tw-aviso button{padding:8px 12px;border-radius:10px;border:1px solid var(--borde);background:var(--surface);color:var(--text2);font-size:0.8rem;cursor:pointer}
     .tw-aviso button.si{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+    .topbar-title.con-neg{display:flex;flex-direction:column;line-height:1.15;max-width:62vw}
+    .topbar-title .neg{font-size:17px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .topbar-title .marca{font-size:10px;font-weight:600;color:var(--text2);letter-spacing:.3px}
+    .topbar-title .marca b{color:var(--accent)}
     .tw-modo-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700}
   </style>
 <script>
@@ -1075,6 +1080,26 @@ let currentGrupo = null;
 let logoTaps = 0;
 // Training Wheels: 'principiante' | 'avanzado'. Sin campo en la cuenta = avanzado (cuentas anteriores no cambian).
 let modoApp = 'avanzado';
+// Nombre del negocio (lo carga el admin en clientes/{email}.negocio). CarneAR queda como marca.
+let negocioNombre = '';
+function twLimpiarNombre(v) { return String(v == null ? '' : v).replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 40); }
+function twPintarTitulo(sucNombre) {
+  const el = document.querySelector('.topbar-title'); if (!el) return;
+  el.textContent = '';
+  if (negocioNombre) {
+    el.classList.add('con-neg');
+    const n = document.createElement('span'); n.className = 'neg'; n.textContent = negocioNombre;
+    const m = document.createElement('small'); m.className = 'marca';
+    m.appendChild(document.createTextNode('Carne')); const b = document.createElement('b'); b.textContent = 'AR'; m.appendChild(b);
+    if (sucNombre) m.appendChild(document.createTextNode(' · ' + sucNombre));
+    el.appendChild(n); el.appendChild(m);
+    try { document.title = negocioNombre + ' · CarneAR'; } catch (_) {}
+  } else {
+    el.classList.remove('con-neg');
+    el.appendChild(document.createTextNode('Carne')); const sp = document.createElement('span'); sp.textContent = 'AR'; el.appendChild(sp);
+    if (sucNombre) { const sm = document.createElement('small'); sm.style.cssText = 'font-size:11px;font-weight:400;opacity:.7;margin-left:4px'; sm.textContent = '— ' + sucNombre; el.appendChild(sm); }
+  }
+}
 function esPrincipiante() { return modoApp === 'principiante' && userRole === 'dueno'; }
 // Vista del admin (solo en su teléfono): 'sucursales' (completo con panel de sucursales, lo de siempre) | 'comun' (completo de un solo local) | 'principiante'
 let twForzarUna = false;
@@ -1448,6 +1473,7 @@ function initApp() {
   document.getElementById('app').style.display = 'block';
   document.getElementById('mobNav').classList.remove('hidden');
   aplicarModoVisual();
+  twPintarTitulo('');
   twMostrarSelectorAdmin();
   renderTabs(getTabsForRole());
   if (userRole === 'dueno' && limiteSucursales > 1 && !esPrincipiante()) {
@@ -2662,8 +2688,7 @@ function entrarEnSucursal(suc) {
   _dashUnsubs.forEach(u => u && u()); _dashUnsubs.length = 0;
   enSucursal = true;
   currentSucursal = suc;
-  const titleEl = document.querySelector('.topbar-title');
-  if (titleEl) titleEl.innerHTML = `Carne<span>AR</span> <small style="font-size:11px;font-weight:400;opacity:.7;margin-left:4px">— ${suc.nombre}</small>`;
+  twPintarTitulo(suc.nombre);
   const topLeft = document.querySelector('.topbar-left');
   if (topLeft && !document.getElementById('btnVolverDash')) {
     const btn = document.createElement('button');
@@ -2674,8 +2699,7 @@ function entrarEnSucursal(suc) {
       enSucursal = false;
       currentSucursal = { id: 'principal', nombre: 'Principal' };
       // Restaurar título
-      const tEl = document.querySelector('.topbar-title');
-      if (tEl) tEl.innerHTML = 'Carne<span>AR</span>';
+      twPintarTitulo('');
       // Quitar botón volver
       document.getElementById('btnVolverDash')?.remove();
       // Renderizar tabs de dashboard y mostrar
@@ -2792,6 +2816,7 @@ async function cargarCliente(user) {
     const datos = clienteSnap.data();
     clienteActual = datos;
     modoApp = (datos.modo === 'principiante') ? 'principiante' : 'avanzado';
+    negocioNombre = twLimpiarNombre(datos.negocio);
 
     // Guardar/actualizar el uid en el registro de cliente (para el panel de actividad)
     if (datos.uid !== user.uid) {
@@ -2864,6 +2889,7 @@ async function cargarMisClientes() {
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
           <div>
             <div style="font-size:14px;font-weight:700;">${cl.nombre||cl.email}</div>
+            ${cl.negocio ? `<div style="font-size:12px;color:var(--accent);font-weight:600;">🏷️ ${twLimpiarNombre(cl.negocio)}</div>` : ''}
             <div style="font-size:11px;color:var(--text2);">${cl.email} · ${_dm}</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">${estadoBadge}${modoBadge}</div>
@@ -2878,6 +2904,7 @@ async function cargarMisClientes() {
           <button onclick="pasarACliente('${d.id}')" style="font-size:11px;padding:6px 10px;border-radius:10px;background:rgba(39,174,96,.1);color:#27ae60;border:1px solid rgba(39,174,96,.3)">✅ Pasar a cliente</button>
           <button onclick="extenderDemo('${d.id}', 7)" style="font-size:11px;padding:6px 10px;border-radius:10px;background:rgba(37,99,235,.1);color:#2563eb;border:1px solid rgba(37,99,235,.3)">+7 días</button>
           <button onclick="extenderDemo('${d.id}', 30)" style="font-size:11px;padding:6px 10px;border-radius:10px;background:rgba(37,99,235,.1);color:#2563eb;border:1px solid rgba(37,99,235,.3)">+30 días</button>
+          <button onclick="twEditarNegocio('${d.id}')" style="font-size:11px;padding:6px 10px;border-radius:10px;background:rgba(37,99,235,.08);color:#2563eb;border:1px solid rgba(37,99,235,.3)">🏷️ Nombre</button>
           <button onclick="twCambiarModo('${d.id}', '${_esP ? 'avanzado' : 'principiante'}')" style="font-size:11px;padding:6px 10px;border-radius:10px;background:rgba(139,0,0,.08);color:#8B0000;border:1px solid rgba(139,0,0,.3)">${_esP ? '🚀 Pasar a Avanzado' : '🌱 Volver a Principiante'}</button>
           <button onclick="toggleCliente('${d.id}', ${!cl.activo})" style="font-size:11px;padding:6px 10px;border-radius:10px;${cl.activo?'background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.3);':'background:rgba(39,174,96,.1);color:#27ae60;border:1px solid rgba(39,174,96,.3);'} cursor:pointer;">${cl.activo?'🚫 Desactivar':'✅ Activar'}</button>
         </div>
@@ -2958,7 +2985,7 @@ function generarResumenCierre(ventas) {
     .map(([k,v]) => `  • ${nombreLabels[k]||k}: $${v.toLocaleString('es-AR')}`)
     .join('\n');
   const sucNombre = currentSucursal?.nombre || 'Principal';
-  return `🥩 *CarneAR — Cierre de Caja*\n📅 ${hoy} | 🏪 ${sucNombre}\n\n🔢 Ventas: ${ventas.length}\n💰 Total: $${total.toLocaleString('es-AR')}\n\n📊 Desglose:\n${desgloseTxt}`;
+  return `${negocioNombre ? '🏪 *' + negocioNombre + '*\n' : ''}🥩 *CarneAR — Cierre de Caja*\n📅 ${hoy} | 🏪 ${sucNombre}\n\n🔢 Ventas: ${ventas.length}\n💰 Total: $${total.toLocaleString('es-AR')}\n\n📊 Desglose:\n${desgloseTxt}`;
 }
 
 async function verResumenCierre() {
@@ -3109,6 +3136,31 @@ async function twCargarUsoClientes() {
 }
 
 // Admin: pasar a un cliente de Principiante a Avanzado (y volver). No toca ningún dato del cliente.
+// Admin: ponerle (o cambiarle) el nombre del negocio a un cliente. No toca otros datos.
+async function twEditarNegocio(email) {
+  try {
+    const snap = await db.collection('clientes').doc(email).get();
+    const actual = snap.exists ? twLimpiarNombre(snap.data().negocio) : '';
+    window._twNegEmail = email;
+    twAbrirModal('🏷️ Nombre del negocio', `
+      <p style="font-size:0.85rem;color:var(--text2);line-height:1.5;margin-bottom:10px">Cuenta: <b>${email}</b><br>Se muestra arriba en su app. <b>CarneAR</b> queda abajo como marca.</p>
+      <input type="text" id="twNegInput" maxlength="40" placeholder="Ej: Carnicería López" style="margin-bottom:10px">
+      <button class="btn-save" style="width:100%" onclick="twGuardarNegocio()">Guardar nombre</button>
+      ${actual ? '<button class="btn-warning" style="width:100%;margin-top:8px" onclick="twGuardarNegocio(true)">Quitar el nombre</button>' : ''}`);
+    const inp = document.getElementById('twNegInput'); if (inp) inp.value = actual;
+  } catch (e) { logError('twEditarNegocio', e.message); toast('Error: ' + e.message); }
+}
+async function twGuardarNegocio(quitar) {
+  const email = window._twNegEmail; if (!email) return;
+  const nombre = quitar ? '' : twLimpiarNombre((document.getElementById('twNegInput') || {}).value);
+  if (!quitar && !nombre) return toast('Escribí el nombre del negocio');
+  try {
+    await db.collection('clientes').doc(email).update({ negocio: nombre });
+    toast(nombre ? '🏷️ Nombre guardado' : 'Nombre quitado');
+    twCerrarModal(); cargarMisClientes();
+  } catch (e) { logError('twGuardarNegocio', e.message); toast('Error: ' + e.message); }
+}
+
 async function twCambiarModo(email, nuevo) {
   if (nuevo !== 'avanzado' && nuevo !== 'principiante') return;
   try {
