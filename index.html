@@ -320,9 +320,9 @@
     .tw-aviso .fila{display:flex;gap:8px;margin-top:8px}
     .tw-aviso button{padding:8px 12px;border-radius:10px;border:1px solid var(--borde);background:var(--surface);color:var(--text2);font-size:0.8rem;cursor:pointer}
     .tw-aviso button.si{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
-    .topbar-title.con-neg{display:flex;flex-direction:column;line-height:1.15;max-width:62vw}
-    .topbar-title .neg{font-size:17px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .topbar-title .marca{font-size:10px;font-weight:600;color:var(--text2);letter-spacing:.3px}
+    .topbar-title.con-neg{display:flex;flex-direction:row;align-items:baseline;gap:6px;max-width:54vw}
+    .topbar-title .neg{font-size:20px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+    .topbar-title .marca{font-size:10px;font-weight:600;color:var(--text2);letter-spacing:.3px;white-space:nowrap;flex-shrink:0}
     .topbar-title .marca b{color:var(--accent)}
     .tw-modo-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700}
   </style>
@@ -2776,6 +2776,7 @@ async function cargarCliente(user) {
   // Admin siempre pasa sin restricciones
   if (esAdmin(email)) {
     { const _v = twVistaAdmin(); modoApp = (_v === 'principiante') ? 'principiante' : 'avanzado'; twForzarUna = (_v === 'comun' || _v === 'principiante'); if (twForzarUna) limiteSucursales = 1; }
+    try { const _s = await db.collection('clientes').doc(email).get(); negocioNombre = _s.exists ? twLimpiarNombre(_s.data().negocio) : ''; } catch (_) { negocioNombre = ''; }
     currentUser = user;
     userRole = 'dueno';
     currentSucursal = { id: 'principal', nombre: 'Principal' };
